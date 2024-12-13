@@ -1,0 +1,19 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"aliases":[],"name":"csharp"},{"aliases":[],"languageName":"pwsh","name":"pwsh"}]}}
+
+#!markdown
+
+### build
+
+#!pwsh
+
+podman build -t podman-streamlit -f app/Containerfile
+
+#!markdown
+
+### run
+
+#!pwsh
+
+podman run -d --name podman-streamlit -p 8501:8501 -v /mnt/c/dev/podman-streamlit/app:/app -v /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock podman-streamlit
