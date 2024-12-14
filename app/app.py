@@ -36,11 +36,29 @@ st.markdown(
     """
 )
 
-uri = "unix:///run/user/1000/podman/podman.sock"
+connections = {
+    "Local User Podman Socket": "unix:///run/user/1000/podman/podman.sock"
+}
 
-st.sidebar.header("Podman Information")
 try:
-    with PodmanClient(base_url=uri) as client:
+    selected_name = st.sidebar.selectbox(
+        "Select Podman API Connection",
+        options=list(connections.keys()),
+        key="connection_selector"
+    )
+
+    selected_uri = connections[selected_name]
+
+    if "selected_uri" not in st.session_state:
+        st.session_state.selected_uri = selected_uri
+
+    if st.session_state.selected_uri != selected_uri:
+        st.session_state.selected_uri = selected_uri
+        st.rerun()
+
+    st.sidebar.header("Podman Information")
+
+    with PodmanClient(base_url=selected_uri, identity="~/.ssh/id_ed25519") as client:
         version = client.version()
         st.sidebar.metric("Release", version["Version"])
         st.sidebar.metric("Compatible API", version["ApiVersion"])
@@ -49,6 +67,7 @@ try:
         st.sidebar.metric("Go Version", version["GoVersion"])
 
         containerTab, imageTab, secretTab = st.tabs(["Containers", "Images", "Secrets"])
+
         with containerTab:
             st.header("🛳️ Podman Containers")
             containers = client.containers.list()
@@ -66,11 +85,12 @@ try:
                     container.reload()
 
                     formatted_ports = ", ".join(
-                        f"{key} ➡️ HostPort: {value['HostPort']}"
+                        f"{key} -> HostIp: {value['HostIp']}, HostPort: {value['HostPort']}"
                         for key, values in container.ports.items()
+                        if values
                         for value in values
                     )
-                    
+
                     status_icon = status_icons.get(container.status.lower(), "❓")
                     container_data.append({
                         "Status": f"{status_icon} {container.status}",
@@ -124,6 +144,7 @@ try:
                 st.info("No images found.")
 
         with secretTab:
+            st.header("🔐 Podman Secrets")
             secrets_list = get_cached_secrets()
             
             createCol, deleteCol = st.columns(2)
