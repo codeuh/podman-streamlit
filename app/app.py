@@ -28,6 +28,12 @@ def delete_secret(secret_id):
     except Exception as e:
         print(str(e))
 
+@st.cache_data
+def secret_exists(secret_name):
+    """Check if a secret with the given name already exists."""
+    secrets = get_cached_secrets()  # Retrieve the cached secrets
+    return any(secret["Name"] == secret_name for secret in secrets)
+
 st.set_page_config(page_title="Podman Streamlit 🦭", page_icon="🦭", layout="wide")
 st.title("🦭 Podman Streamlit 🦭")
 st.markdown(
@@ -131,7 +137,8 @@ try:
                         readable_time = f"{relative_time.minutes} minutes ago"
 
                     image_data.append({
-                        "Tags": ', '.join(image.tags) if image.tags else "None",
+                        #"Tags": ', '.join(image.tags) if image.tags else "None",
+                        "Tags": image.tags,
                         "ID": image.short_id,
                         "Size (MB)": round(image.attrs.get("Size", 0) / 1024 / 1024, 2),
                         "Created": readable_time,
@@ -152,27 +159,31 @@ try:
             with createCol:
                 nameCol, dataCol = st.columns(2)
                 with nameCol:
-                    secret_name = st.text_input("Enter your secret name:")
+                    secret_name = st.text_input("Secret name:", key="secret_name_input")
                 with dataCol:
-                    secret_data = st.text_input("Enter your secret data:", type="password")
+                    secret_data = st.text_input("Secret data:", type="password", key="secret_data_input")
+
                 if st.button("Create Secret"):
                     if not secret_name or not secret_data:
                         st.error("Please provide both a secret name and data.")
                     else:
-                        new_secret = create_secret(secret_name, secret_data)
-                        st.success(f"Created Secret {new_secret.name} successfully!")
-                        refresh_cached_secrets()  
+                        if secret_exists(secret_name): 
+                            st.warning(f"A secret with the name '{secret_name}' already exists.")
+                        else:
+                            create_secret(secret_name, secret_data)  
+                            refresh_cached_secrets()  
+                            st.rerun()
 
             with deleteCol:
                 secrets_list = get_cached_secrets()
                 secret_names = {secret["Name"]: secret["ID"] for secret in secrets_list}  
-                secret_to_delete = st.selectbox("Select a secret to delete:", options=list(secret_names.keys()))
+                secret_to_delete = st.selectbox("Delete secret:", options=list(secret_names.keys()))
                 if st.button("Delete Secret"):
                     secret_id = secret_names.get(secret_to_delete)
                     try:
                         delete_secret(secret_id)
-                        st.success(f"Secret '{secret_to_delete}' deleted successfully!")
                         refresh_cached_secrets()  
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Error deleting secret: {str(e)}")
 
@@ -180,7 +191,7 @@ try:
                 st.dataframe(secrets_list, use_container_width=True)
             else:
                 st.info("No secrets found.")
-
+                
     with st.expander("Resource Usage Details"):
         resource_data = client.df()
         st.json(resource_data)
