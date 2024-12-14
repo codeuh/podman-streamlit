@@ -28,8 +28,8 @@ def delete_secret(secret_id):
     except Exception as e:
         print(str(e))
 
-st.set_page_config(page_title="Podman Manager 🦭", page_icon="🦭", layout="wide")
-st.title("🦭 Podman Manager 🦭")
+st.set_page_config(page_title="Podman Streamlit 🦭", page_icon="🦭", layout="wide")
+st.title("🦭 Podman Streamlit 🦭")
 st.markdown(
     """
     This app displays **Podman container information** in an organized and interactive way.
@@ -64,13 +64,20 @@ try:
 
                 for container in containers:
                     container.reload()
+
+                    formatted_ports = ", ".join(
+                        f"{key} ➡️ HostPort: {value['HostPort']}"
+                        for key, values in container.ports.items()
+                        for value in values
+                    )
+                    
                     status_icon = status_icons.get(container.status.lower(), "❓")
                     container_data.append({
                         "Status": f"{status_icon} {container.status}",
                         "Name": container.name,
                         "ID": container.short_id,
-                        "Image": container.image,
-                        "Ports": container.ports,
+                        "Image": container.image.tags,
+                        "Ports": formatted_ports,
                     })
 
                 df_containers = pd.DataFrame(container_data)
