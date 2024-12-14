@@ -28,8 +28,8 @@ def delete_secret(secret_id):
     except Exception as e:
         print(str(e))
 
-st.set_page_config(page_title="Podman Manager", page_icon="🦭", layout="wide")
-st.title("🦭 Podman Manager🦭")
+st.set_page_config(page_title="Podman Manager 🦭", page_icon="🦭", layout="wide")
+st.title("🦭 Podman Manager 🦭")
 st.markdown(
     """
     This app displays **Podman container information** in an organized and interactive way.
@@ -152,10 +152,10 @@ try:
                 st.dataframe(secrets_list, use_container_width=True)
             else:
                 st.info("No secrets found.")
-                
+
     with st.expander("Resource Usage Details"):
-                        resource_data = client.df()
-                        st.json(resource_data)
+        resource_data = client.df()
+        st.json(resource_data)
 
 except Exception as e:
     st.exception(e)
