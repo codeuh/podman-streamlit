@@ -8,7 +8,7 @@
 
 #!pwsh
 
-podman build -t podman-streamlit -f app/Containerfile
+podman build -t podman-streamlit app/.
 
 #!markdown
 
