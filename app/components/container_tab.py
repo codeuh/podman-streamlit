@@ -3,6 +3,19 @@ import pandas as pd
 from utils.container_utils import get_containers
 
 def show_container_tab(client):
+    """
+    Displays a tab for managing Podman containers.
+
+    This function generates a Streamlit interface to display and manage Podman containers.
+    It provides buttons for starting, pausing, stopping, and removing containers,
+    as well as a data editor to select specific containers for these actions.
+
+    Parameters:
+        client (PodmanClient): The client object used to interact with the containers.
+
+    Returns:
+        None
+    """
     st.header("🛳️ Podman Containers")
     container_data = get_containers(client)
 

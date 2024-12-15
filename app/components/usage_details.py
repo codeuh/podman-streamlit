@@ -3,6 +3,19 @@ import pandas as pd
 import altair as alt
 
 def show_usage_details(client):
+    """
+    Displays usage details for containers, images, and volumes.
+
+    This function takes a client object as input and uses it to retrieve resource data.
+    It then creates interactive charts using Altair to visualize the size of containers, 
+    images, and volumes, as well as the reclaimable space for volumes.
+
+    Args:
+        client (PodmanClient): A client object with a method 'df()' that returns resource data.
+
+    Returns:
+        None
+    """
     resource_data = client.df()
 
     st.subheader("Containers")

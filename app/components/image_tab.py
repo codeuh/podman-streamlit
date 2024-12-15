@@ -4,6 +4,18 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 def show_image_tab(client):
+    """
+    Displays a tab in Streamlit that shows information about Podman images.
+
+    This function connects to the client, retrieves a list of available images,
+    and displays their details, including tags, IDs, sizes, and creation times.
+    
+    Args:
+        client (PodmanClient): A client object used to connect to the container runtime.
+        
+    Returns:
+        None
+    """
     st.header("📦 Podman Images")
     images = client.images.list()
 

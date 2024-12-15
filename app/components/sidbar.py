@@ -5,6 +5,16 @@ connections = {
 }
 
 def show_sidebar_socket_selector():
+    """
+    Show a selectbox in the sidebar to choose a Podman API connection.
+
+    This function provides an interface for users to select from available
+    connections and updates the session state accordingly. If the selected
+    URI changes, it triggers a rerun of the Streamlit app.
+
+    Returns:
+        str: The URI of the selected Podman API connection.
+    """
     selected_name = st.sidebar.selectbox(
         "Select Podman API Connection",
         options=list(connections.keys()),
@@ -22,6 +32,17 @@ def show_sidebar_socket_selector():
     return selected_uri
 
 def show_sidebar_details(client):
+    """
+    Display Podman information in the sidebar.
+
+    This function retrieves version information from the provided client and 
+    displays it as metrics in the Streamlit app's sidebar. The displayed 
+    information includes the release version, compatible API version, OS, 
+    architecture, and Go version used by Podman.
+
+    Args:
+        client (PodmanClient): A client object with a `version()` method to retrieve Podman version information.
+    """
     st.sidebar.header("Podman Information")
 
     version = client.version()

@@ -2,6 +2,18 @@ import streamlit as st
 from utils.secret_utils import get_cached_secrets, refresh_cached_secrets, create_secret, delete_secret, secret_exists 
 
 def show_secret_tab(client):
+    """
+    Displays a tab for managing Podman secrets.
+
+    This function creates a Streamlit interface with options to create and delete secrets.
+    It fetches the list of existing secrets from the client and displays them in a dataframe.
+    
+    Args:
+        client (PodmanClient): The client object used to interact with the Podman API.
+
+    Returns:
+        None
+    """
     st.header("🔐 Podman Secrets")
     secrets_list = get_cached_secrets(client)
 

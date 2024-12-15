@@ -31,7 +31,7 @@ try:
     with st.expander("Resource Usage Details"):
         show_usage_details(client)
 
-    time.sleep(2)  
+    time.sleep(2)
     st.rerun()
 
 except Exception as e:
