@@ -262,18 +262,6 @@ try:
     with st.expander("Resource Usage Details"):
         resource_data = client.df()
 
-        st.subheader("Images")
-        image_data = pd.DataFrame(resource_data["Images"])
-        image_data["Size_MB"] = image_data["Size"] / (1024 * 1024)
-
-        image_chart = alt.Chart(image_data).mark_bar().encode(
-            y=alt.Y("Repository:N", sort="-x", title="Repository"),
-            x=alt.X("Size_MB:Q", title="Size (MB)"),
-            color=alt.Color("Tag:N", title="Tag"),
-            tooltip=["Repository", "Tag", "Size_MB"]
-        ).properties(height=300)
-        st.altair_chart(image_chart, use_container_width=True)
-
         st.subheader("Containers")
         container_data = pd.DataFrame(resource_data["Containers"])
         container_data["Size_MB"] = container_data["Size"] / (1024 * 1024)
@@ -285,6 +273,18 @@ try:
             tooltip=["Names", "Status", "Size_MB"]
         ).properties(height=300)
         st.altair_chart(container_chart, use_container_width=True)
+
+        st.subheader("Images")
+        image_data = pd.DataFrame(resource_data["Images"])
+        image_data["Size_MB"] = image_data["Size"] / (1024 * 1024)
+
+        image_chart = alt.Chart(image_data).mark_bar().encode(
+            y=alt.Y("Repository:N", sort="-x", title="Repository"),
+            x=alt.X("Size_MB:Q", title="Size (MB)"),
+            color=alt.Color("Tag:N", title="Tag"),
+            tooltip=["Repository", "Tag", "Size_MB"]
+        ).properties(height=300)
+        st.altair_chart(image_chart, use_container_width=True)
 
         st.subheader("Volumes")
         volume_data = pd.DataFrame(resource_data["Volumes"])
