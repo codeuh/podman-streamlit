@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.secret_utils import get_cached_secrets, refresh_cached_secrets, create_secret, delete_secret, secret_exists 
+from utils.secret_utils import get_cached_secrets, create_secret, delete_secret, secret_exists 
 
 def show_secret_tab(client):
     """
@@ -34,7 +34,6 @@ def show_secret_tab(client):
                     st.warning(f"A secret with the name '{secret_name}' already exists.")
                 else:
                     create_secret(client,secret_name, secret_data)
-                    refresh_cached_secrets(client)
                     st.rerun()
 
     with deleteCol:
@@ -44,7 +43,6 @@ def show_secret_tab(client):
             secret_id = secret_names.get(secret_to_delete)
             try:
                 delete_secret(client, secret_id)
-                refresh_cached_secrets(client)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error deleting secret: {str(e)}")

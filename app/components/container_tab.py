@@ -16,7 +16,7 @@ def show_container_tab(client):
     Returns:
         None
     """
-    st.header("🛳️ Podman Containers")
+    st.header("📦 Podman Containers")
     container_data = get_containers(client)
 
     df_containers = pd.DataFrame(container_data)
@@ -24,21 +24,27 @@ def show_container_tab(client):
     containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
     with containerCols[0]:
-        start_all = st.button("▶️", help="Start Container")
+        inspect_all = st.button("🔍", help="Inspect Container")
 
     with containerCols[1]:
-        pause_all = st.button("⏸️", help="Pause Container")
+        start_all = st.button("▶️", help="Start Container")
 
     with containerCols[2]:
-        stop_all = st.button("⏹️", help="Stop Container")
+        pause_all = st.button("⏸️", help="Pause Container")
 
     with containerCols[3]:
-        remove_all = st.button("🗑️", help="Remove Container")
+        stop_all = st.button("⏹️", help="Stop Container")
 
     with containerCols[4]:
+        remove_all = st.button("🗑️", help="Remove Container")
+
+    with containerCols[5]:
         if st.button("✂️", help="Prune Containers"):
             client.containers.prune()  
             st.rerun()
+    
+    with containerCols[6]:
+         refresh_all = st.button("🔃", help= "Refresh Container")  
 
     edited_containers_df = st.data_editor(df_containers, 
                     hide_index=True,
@@ -52,6 +58,11 @@ def show_container_tab(client):
                     use_container_width=True)
 
     selected_containers = edited_containers_df[edited_containers_df['Selected']]
+
+    if inspect_all and not selected_containers.empty:
+        for _, row in selected_containers.iterrows():
+            container = st.session_state.container_objects[row['ID']]
+            st.write(container.attrs)
 
     if start_all and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
@@ -82,4 +93,7 @@ def show_container_tab(client):
         for _, row in selected_containers.iterrows():
             container = st.session_state.container_objects[row['ID']]
             container.remove(force=True)
+        st.rerun()
+        
+    if refresh_all:
         st.rerun()
