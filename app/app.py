@@ -3,8 +3,48 @@ from podman import PodmanClient
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
+import altair as alt
 
-@st.cache_data
+status_icons = {
+                    "running": "🟢",
+                    "stopped": "🛑",
+                    "exited": "🔴",
+                    "paused": "⏸️",
+                    "created": "💡"
+                }
+
+def get_containers():
+    containers = client.containers.list(all=True)
+    
+    st.session_state.container_objects = {}
+    container_data = []
+    
+    if containers:
+        for container in containers:
+            container.reload()
+            
+            formatted_ports = ", ".join(
+                f"{key} -> HostIp: {value.get('HostIp', 'N/A')}, HostPort: {value.get('HostPort', 'N/A')}"
+                for key, values in container.ports.items()
+                if values
+                for value in values
+            ) if container.ports else "No ports"
+
+            status_icon = status_icons.get(container.status.lower(), "❓")
+            
+            container_data.append({
+                "Selected": False,
+                "Status": f"{status_icon} {container.status}",
+                "Name": container.name,
+                "ID": container.short_id,
+                "Image": container.image.tags,
+                "Ports": formatted_ports,
+            })
+            
+            st.session_state.container_objects[container.short_id] = container
+    return container_data
+
 def get_cached_secrets():
     secrets_list = list_secrets()
     return [{"Name": secret.name, "ID": secret.id} for secret in secrets_list]
@@ -17,8 +57,7 @@ def list_secrets():
     return client.secrets.list()
 
 def create_secret(secret_name, data):
-    secret = client.secrets.create(name=secret_name, 
-                                  data=data)
+    secret = client.secrets.create(name=secret_name, data=data)
     return secret
 
 def delete_secret(secret_id):
@@ -28,10 +67,8 @@ def delete_secret(secret_id):
     except Exception as e:
         print(str(e))
 
-@st.cache_data
 def secret_exists(secret_name):
-    """Check if a secret with the given name already exists."""
-    secrets = get_cached_secrets()  # Retrieve the cached secrets
+    secrets = get_cached_secrets()
     return any(secret["Name"] == secret_name for secret in secrets)
 
 st.set_page_config(page_title="Podman Streamlit 🦭", page_icon="🦭", layout="wide")
@@ -76,41 +113,72 @@ try:
 
         with containerTab:
             st.header("🛳️ Podman Containers")
-            containers = client.containers.list()
+            container_data = get_containers()
 
-            if containers:
-                container_data = []
-                status_icons = {
-                    "running": "🟢",
-                    "exited": "🔴",
-                    "paused": "⏸️",
-                    "created": "💡"
-                }
+            df_containers = pd.DataFrame(container_data)
 
-                for container in containers:
-                    container.reload()
+            containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
-                    formatted_ports = ", ".join(
-                        f"{key} -> HostIp: {value['HostIp']}, HostPort: {value['HostPort']}"
-                        for key, values in container.ports.items()
-                        if values
-                        for value in values
-                    )
+            with containerCols[0]:
+                start_all = st.button("▶️", help="Start Container")
 
-                    status_icon = status_icons.get(container.status.lower(), "❓")
-                    container_data.append({
-                        "Status": f"{status_icon} {container.status}",
-                        "Name": container.name,
-                        "ID": container.short_id,
-                        "Image": container.image.tags,
-                        "Ports": formatted_ports,
-                    })
+            with containerCols[1]:
+                pause_all = st.button("⏸️", help="Pause Container")
 
-                df_containers = pd.DataFrame(container_data)
+            with containerCols[2]:
+                stop_all = st.button("⏹️", help="Stop Container")
 
-                st.dataframe(df_containers, hide_index=True, use_container_width=True)
-            else:
-                st.info("No containers found.")
+            with containerCols[3]:
+                remove_all = st.button("🗑️", help="Remove Container")
+            
+            with containerCols[4]:
+               if st.button("✂️", help="Prune Containers"):
+                   client.containers.prune()  
+                   st.rerun()
+
+            edited_containers_df = st.data_editor(df_containers, 
+                            hide_index=True,
+                            disabled=("Status","Name","ID","Image","Ports"), 
+                            column_config={
+                                "Selected": st.column_config.CheckboxColumn(
+                                    "",
+                                    help="Select containers for actions"
+                                )
+                            },
+                            use_container_width=True)
+            
+            selected_containers = edited_containers_df[edited_containers_df['Selected']]
+
+            if start_all and not selected_containers.empty:
+                for _, row in selected_containers.iterrows():
+                    container = st.session_state.container_objects[row['ID']]
+                    if container.status == "paused":
+                        container.unpause()
+                    elif container.status == "exited":
+                        container.start(force=True)
+                st.rerun()
+
+            if pause_all and not selected_containers.empty:
+                for _, row in selected_containers.iterrows():
+                    container = st.session_state.container_objects[row['ID']]
+                    if container.status == "running":
+                        container.pause()
+                st.rerun()
+
+            if stop_all and not selected_containers.empty:
+                for _, row in selected_containers.iterrows():
+                    container = st.session_state.container_objects[row['ID']]
+                    if container.status != "paused":
+                        container.stop()
+                    else:
+                        container.kill()
+                st.rerun()
+
+            if remove_all and not selected_containers.empty:
+                for _, row in selected_containers.iterrows():
+                    container = st.session_state.container_objects[row['ID']]
+                    container.remove(force=True)
+                st.rerun()
 
         with imageTab:
             st.header("📦 Podman Images")
@@ -137,7 +205,6 @@ try:
                         readable_time = f"{relative_time.minutes} minutes ago"
 
                     image_data.append({
-                        #"Tags": ', '.join(image.tags) if image.tags else "None",
                         "Tags": image.tags,
                         "ID": image.short_id,
                         "Size (MB)": round(image.attrs.get("Size", 0) / 1024 / 1024, 2),
@@ -153,7 +220,7 @@ try:
         with secretTab:
             st.header("🔐 Podman Secrets")
             secrets_list = get_cached_secrets()
-            
+
             createCol, deleteCol = st.columns(2)
 
             with createCol:
@@ -167,22 +234,22 @@ try:
                     if not secret_name or not secret_data:
                         st.error("Please provide both a secret name and data.")
                     else:
-                        if secret_exists(secret_name): 
+                        if secret_exists(secret_name):
                             st.warning(f"A secret with the name '{secret_name}' already exists.")
                         else:
-                            create_secret(secret_name, secret_data)  
-                            refresh_cached_secrets()  
+                            create_secret(secret_name, secret_data)
+                            refresh_cached_secrets()
                             st.rerun()
 
             with deleteCol:
                 secrets_list = get_cached_secrets()
-                secret_names = {secret["Name"]: secret["ID"] for secret in secrets_list}  
+                secret_names = {secret["Name"]: secret["ID"] for secret in secrets_list}
                 secret_to_delete = st.selectbox("Delete secret:", options=list(secret_names.keys()))
                 if st.button("Delete Secret"):
                     secret_id = secret_names.get(secret_to_delete)
                     try:
                         delete_secret(secret_id)
-                        refresh_cached_secrets()  
+                        refresh_cached_secrets()
                         st.rerun()
                     except Exception as e:
                         st.error(f"Error deleting secret: {str(e)}")
@@ -194,7 +261,57 @@ try:
                 
     with st.expander("Resource Usage Details"):
         resource_data = client.df()
-        st.json(resource_data)
+
+        st.subheader("Images")
+        image_data = pd.DataFrame(resource_data["Images"])
+        image_data["Size_MB"] = image_data["Size"] / (1024 * 1024)
+
+        image_chart = alt.Chart(image_data).mark_bar().encode(
+            y=alt.Y("Repository:N", sort="-x", title="Repository"),
+            x=alt.X("Size_MB:Q", title="Size (MB)"),
+            color=alt.Color("Tag:N", title="Tag"),
+            tooltip=["Repository", "Tag", "Size_MB"]
+        ).properties(height=300)
+        st.altair_chart(image_chart, use_container_width=True)
+
+        st.subheader("Containers")
+        container_data = pd.DataFrame(resource_data["Containers"])
+        container_data["Size_MB"] = container_data["Size"] / (1024 * 1024)
+
+        container_chart = alt.Chart(container_data).mark_bar().encode(
+            y=alt.Y("Names:N", sort="-x", title="Container Names"),
+            x=alt.X("Size_MB:Q", title="Size (MB)"),
+            color=alt.Color("Status:N", title="Status"),
+            tooltip=["Names", "Status", "Size_MB"]
+        ).properties(height=300)
+        st.altair_chart(container_chart, use_container_width=True)
+
+        st.subheader("Volumes")
+        volume_data = pd.DataFrame(resource_data["Volumes"])
+        volume_data["Size_MB"] = volume_data["Size"] / (1024 * 1024)
+        volume_data["ReclaimableSize_MB"] = volume_data["ReclaimableSize"] / (1024 * 1024)
+
+        volume_chart = alt.Chart(volume_data).mark_bar().encode(
+            y=alt.Y("VolumeName:N", sort="-x", title="Volume Name"),
+            x=alt.X("Size_MB:Q", title="Size (MB)"),
+            color=alt.Color("Links:Q", title="Links"),
+            tooltip=["VolumeName", "Size_MB", "ReclaimableSize_MB", "Links"]
+        ).properties(height=300)
+        st.altair_chart(volume_chart, use_container_width=True)
+
+        reclaimable_space = volume_data[volume_data["ReclaimableSize_MB"] > 0]
+        st.write("Volumes with reclaimable space:")
+        reclaimable_chart = alt.Chart(reclaimable_space).mark_bar().encode(
+            y=alt.Y("VolumeName:N", sort="-x", title="Volume Name"),
+            x=alt.X("ReclaimableSize_MB:Q", title="Reclaimable Size (MB)"),
+            color=alt.Color("Links:Q", title="Links"),
+            tooltip=["VolumeName", "ReclaimableSize_MB", "Links"]
+        ).properties(height=300)
+        st.altair_chart(reclaimable_chart, use_container_width=True)
+
+    # not very efficent
+    time.sleep(2)  
+    st.rerun()
 
 except Exception as e:
     st.exception(e)
