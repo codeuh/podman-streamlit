@@ -1,12 +1,6 @@
 import streamlit as st
 
-status_icons = {
-                    "running": "🟢",
-                    "stopped": "🛑",
-                    "exited": "🔴",
-                    "paused": "⏸️",
-                    "created": "💡"
-                }
+from utils.status_icons import *
 
 def get_containers(client):
     """

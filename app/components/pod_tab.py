@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from utils.status_icons import *
 
 def show_pod_tab(client):
     """
@@ -22,9 +23,15 @@ def show_pod_tab(client):
         for pod in pods:
             created_timestamp = pod.attrs.get("Created", 0)
 
+            containers = pod.attrs['Containers']
+            status_icon = "".join(
+                status_icons.get(c['Status'], '❓') for c in containers
+            )
+
             pod_data.append({
                 "Selected": False,
                 "Name": pod.name,
+                "Status": status_icon,
                 "ID": pod.short_id,
                 "Created": created_timestamp,
             })
@@ -37,15 +44,23 @@ def show_pod_tab(client):
             inspect_all = st.button("🔍", help="Inspect Pod")
 
         with podCols[1]:
-            remove_all = st.button("🗑️", help="Remove Pod")
+            start_all = st.button("▶️", help="Start Pod")
 
         with podCols[2]:
-            start_all = st.button("▶️", help="Start Pod")
+            pause_all = st.button("⏸️", help="Pause Pod")
 
         with podCols[3]:
             stop_all = st.button("⏹️", help="Stop Pod")
 
         with podCols[4]:
+            remove_all = st.button("🗑️", help="Remove Pod")
+        
+        with podCols[5]:
+            if st.button("✂️", help="Prune Pod"):
+                client.pods.prune()  
+                st.rerun()
+
+        with podCols[6]:
             refresh_all = st.button("🔄", help="Refresh Pods")
 
         edited_pods_df = st.data_editor(df_pods, 
@@ -67,25 +82,37 @@ def show_pod_tab(client):
                 pod = client.pods.get(pod_name)
                 st.write(pod.attrs)
 
-        if remove_all and not selected_pods.empty:
-            for _, row in selected_pods.iterrows():
-                pod_name = row['Name']
-                pod = client.pods.get(pod_name)
-                pod.remove(force=True)
-            st.rerun()
-
         if start_all and not selected_pods.empty:
             for _, row in selected_pods.iterrows():
                 pod_name = row['Name']
                 pod = client.pods.get(pod_name)
-                pod.start()
+                if pod.attrs['State'] == 'Paused':
+                    pod.unpause()
+                elif  pod.attrs['State'] == 'Exited':
+                    pod.start()
+            st.rerun()
+
+        if pause_all and not selected_pods.empty:
+            for _, row in selected_pods.iterrows():
+                pod_name = row['Name']
+                pod = client.pods.get(pod_name)
+                if pod.attrs['State'] == 'Running':
+                    pod.pause()
             st.rerun()
 
         if stop_all and not selected_pods.empty:
             for _, row in selected_pods.iterrows():
                 pod_name = row['Name']
                 pod = client.pods.get(pod_name)
-                pod.stop(timeout=10)
+                if pod.attrs['State'] != 'Paused':
+                    pod.stop(timeout=10)
+            st.rerun()
+
+        if remove_all and not selected_pods.empty:
+            for _, row in selected_pods.iterrows():
+                pod_name = row['Name']
+                pod = client.pods.get(pod_name)
+                pod.remove(force=True)
             st.rerun()
 
         if refresh_all:

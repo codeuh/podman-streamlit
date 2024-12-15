@@ -44,7 +44,7 @@ def show_container_tab(client):
             st.rerun()
     
     with containerCols[6]:
-         refresh_all = st.button("🔃", help= "Refresh Container")  
+         refresh_all = st.button("🔄", help= "Refresh Container")  
 
     edited_containers_df = st.data_editor(df_containers, 
                     hide_index=True,
