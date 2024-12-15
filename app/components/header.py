@@ -2,9 +2,9 @@ import streamlit as st
 
 def show_header():
     st.set_page_config(page_title="Podman Streamlit 🦭", page_icon="🦭", layout="wide")
-    st.title("🦭 Podman Streamlit 🦭")
+    st.title("🦭 Podman 🦭 Streamlit 🦭")
     st.markdown(
         """
-        This app displays **Podman container information** in an organized and interactive way.
+        This app was developed by [codeuh](https://github.com/codeuh) as a way to learn more about [Streamlit](https://streamlit.io/) and [Podman](https://podman.io/).
         """
     )
