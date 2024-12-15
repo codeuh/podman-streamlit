@@ -27,23 +27,26 @@ def show_container_tab(client):
         inspect_all = st.button("🔍", help="Inspect Container")
 
     with containerCols[1]:
-        start_all = st.button("▶️", help="Start Container")
+        log_all = st.button("📜", help="Container Logs")
 
     with containerCols[2]:
-        pause_all = st.button("⏸️", help="Pause Container")
+        start_all = st.button("▶️", help="Start Container")
 
     with containerCols[3]:
-        stop_all = st.button("⏹️", help="Stop Container")
+        pause_all = st.button("⏸️", help="Pause Container")
 
     with containerCols[4]:
-        remove_all = st.button("🗑️", help="Remove Container")
+        stop_all = st.button("⏹️", help="Stop Container")
 
     with containerCols[5]:
+        remove_all = st.button("🗑️", help="Remove Container")
+
+    with containerCols[6]:
         if st.button("✂️", help="Prune Containers"):
             client.containers.prune()  
             st.rerun()
     
-    with containerCols[6]:
+    with containerCols[7]:
          refresh_all = st.button("🔄", help= "Refresh Container")  
 
     edited_containers_df = st.data_editor(df_containers, 
@@ -63,6 +66,20 @@ def show_container_tab(client):
         for _, row in selected_containers.iterrows():
             container = st.session_state.container_objects[row['ID']]
             st.write(container.attrs)
+
+    if log_all and not selected_containers.empty:
+        for _, row in selected_containers.iterrows():
+            container = st.session_state.container_objects[row['ID']]
+            logs = container.logs(stream=False,stdout=True, stderr=True,)
+
+            st.subheader(f"Logs for container: {row['Name']}")
+
+            log_placeholder = st.empty()
+            log_lines = []
+
+            for log_line in logs:
+                log_lines.append(log_line.decode('utf-8'))
+                log_placeholder.code("\n".join(log_lines))
 
     if start_all and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
