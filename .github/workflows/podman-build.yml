@@ -1,0 +1,60 @@
+name: Build and Publish Podman Container
+
+on:
+  push:
+    branches: 
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+      
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata for container image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build Podman Image
+        id: build-image
+        run: |
+          podman build -t ${{ steps.meta.outputs.tags }} -f ./app/Containerfile
+      
+      - name: Push to GitHub Packages
+        if: github.event_name != 'pull_request'
+        run: |
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            podman push $tag
+          done
