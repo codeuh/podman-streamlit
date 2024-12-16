@@ -28,12 +28,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y podman
       
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
       
       - name: Extract metadata for container image
         id: meta
@@ -50,11 +47,12 @@ jobs:
       - name: Build Podman Image
         id: build-image
         run: |
-          podman build -t ${{ steps.meta.outputs.tags }} -f ./app/Containerfile
+          podman build -t ${{ steps.meta.outputs.tags }} .
       
       - name: Push to GitHub Packages
         if: github.event_name != 'pull_request'
         run: |
-          for tag in ${{ steps.meta.outputs.tags }}; do
+          IFS=',' read -ra TAGS <<< "${{ steps.meta.outputs.tags }}"
+          for tag in "${TAGS[@]}"; do
             podman push $tag
           done
