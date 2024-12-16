@@ -17,7 +17,7 @@ def show_image_tab(client):
         None
     """
     st.header("🖼️ Podman Images")
-    images = client.images.list()
+    images = client.images.list(all=True)
 
     if images:
         image_data = []
@@ -63,6 +63,7 @@ def show_image_tab(client):
         with imageCols[3]:
             if st.button("✂️", help="Prune Images"):
                 client.images.prune()  
+                client.images.prune_builds()
                 st.rerun()
         with imageCols[4]:
             refresh_all = st.button("🔄", help="Refresh Images")

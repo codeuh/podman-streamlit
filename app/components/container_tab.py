@@ -78,8 +78,10 @@ def show_container_tab(client):
             log_lines = []
 
             for log_line in logs:
-                log_lines.append(log_line.decode('utf-8'))
-                log_placeholder.code("\n".join(log_lines))
+                decoded_log_line = log_line.decode('utf-8')
+                if decoded_log_line.strip():
+                    log_lines.append(decoded_log_line)
+            log_placeholder.code("\n".join(log_lines))
 
     if start_all and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
