@@ -47,15 +47,19 @@ jobs:
       - name: Build Podman Image
         id: build-image
         run: |
+          # Print out the tags for debugging
+          echo "Tags from metadata: ${{ steps.meta.outputs.tags }}"
+          
+          # Build the image specifying the context and Containerfile
           podman build \
             -f ./app/Containerfile \
-            -t ${{ steps.meta.outputs.tags }} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }} \
             ./app
       
       - name: Push to GitHub Packages
         if: github.event_name != 'pull_request'
         run: |
-          IFS=',' read -ra TAGS <<< "${{ steps.meta.outputs.tags }}"
-          for tag in "${TAGS[@]}"; do
-            podman push $tag
-          done
+          # Explicitly define the tags to push
+          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
