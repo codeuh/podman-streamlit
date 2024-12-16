@@ -47,7 +47,10 @@ jobs:
       - name: Build Podman Image
         id: build-image
         run: |
-          podman build -t ${{ steps.meta.outputs.tags }} ./app/.
+          podman build \
+            -f ./app/Containerfile \
+            -t ${{ steps.meta.outputs.tags }} \
+            ./app
       
       - name: Push to GitHub Packages
         if: github.event_name != 'pull_request'
