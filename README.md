@@ -10,7 +10,7 @@
 
 I've only tested it running on a RHEL-9 WSL distro with Podman installed and working correctly. 
 
-You can determin the path to your socket on a Linux machine with the following command:
+You can determine the path to your socket on a Linux machine with the following command:
 
 ````shell
 podman info | grep sock
