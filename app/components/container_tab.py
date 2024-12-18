@@ -2,6 +2,35 @@ import streamlit as st
 import pandas as pd
 from utils.container_utils import get_containers
 
+@st.dialog("Execute Container")
+def execute(item):
+    """
+    Execute a command in a selected container.
+
+    This function creates a dialog for executing a command in a Podman container.
+    It allows the user to select a container, input a command, and run it.
+    The output of the command is then displayed in the Streamlit app.
+
+    Args:
+        item: An object containing information about the available containers.
+
+    Returns:
+        None
+    """
+    selected_name = st.selectbox("Select a Container",options=item.Name)
+    command = st.text_input("Execute command:")
+    container_id = next((c for c in st.session_state.container_objects.keys() if st.session_state.container_objects[c].name == selected_name), None)
+    container = st.session_state.container_objects[container_id]
+    if st.button("Run"):
+        output = container.exec_run(command,stderr=True, stdout=True)  
+        try:
+            decoded_output = output[1].decode('utf-8').strip()
+        except UnicodeDecodeError:
+            decoded_output = output[1].decode('utf-8', errors='replace').strip()
+        cleaned_output = ''.join(char for char in decoded_output if char.isprintable() or char.isspace())
+        st.session_state.execute = {"container": container, "command": command, "output": cleaned_output}
+        st.rerun()
+
 def show_container_tab(client):
     """
     Displays a tab for managing Podman containers.
@@ -19,7 +48,7 @@ def show_container_tab(client):
     st.header("📦 Podman Containers")
     container_data = get_containers(client)
 
-    df_containers = pd.DataFrame(container_data)
+    df_containers = pd.DataFrame(container_data)         
 
     containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
@@ -116,3 +145,26 @@ def show_container_tab(client):
         
     if refresh_all:
         st.rerun()
+
+
+    with st.expander("Avanced Container Tools"):
+        executeTab,otherTab = st.tabs(["Execute","Other"])
+        
+        with executeTab:
+            executeCols = st.columns(2)
+            with executeCols[0]:
+                container_exec = st.button("Execute Command in Container")
+            with executeCols[1]:
+                container_exec_clear = st.button("Clear Command and Output")
+            if container_exec:
+                execute(df_containers)
+
+            if container_exec_clear:
+                if "execute" in st.session_state:
+                    del st.session_state["execute"]
+            
+            if "execute" in st.session_state:
+                st.write(f"command ran in container {st.session_state.execute["container"].name}")
+                st.code(st.session_state.execute["command"])
+                st.write("output:")
+                st.code(st.session_state.execute["output"])
