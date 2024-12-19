@@ -3,6 +3,42 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+import json
+
+import json
+
+@st.dialog("Pull Image")
+def pull(client):
+    """
+    Opens a dialog to input the repository and tag for pulling an image.
+
+    Args:
+        client (PodmanClient): The client object used to interact with the container runtime.
+
+    Returns:
+        None
+    """
+    repository = st.text_input("Repository:")
+    all_tags = st.checkbox("Pull all tags")
+    
+    if st.button("Pull"):
+        try:
+            with st.spinner("Pulling..."):
+                output_placeholder = st.empty() 
+
+                if all_tags:
+                    output = client.images.pull(repository, all_tags=True)
+                else:
+                    output = client.images.pull(repository)
+
+                output_placeholder.write("✅ **Image pulled successfully!**")
+
+            st.session_state.pull = {"output": output}
+            st.rerun()
+
+        except Exception as e:
+            st.error(str(e))
+
 def show_image_tab(client):
     """
     Displays a tab in Streamlit that shows information about Podman images.
@@ -52,21 +88,21 @@ def show_image_tab(client):
         imageCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
         with imageCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Image")
+            inspect_all = st.button("🔍", help="Inspect Selected Images")
 
         with imageCols[1]:
-            pull_all = st.button("📥", help="Pull Image")
+            pull_all = st.button("📥", help="Pull Selected Images")
 
         with imageCols[2]:
-            remove_all = st.button("🗑️", help="Remove Image")
+            remove_all = st.button("🗑️", help="Remove Selected Images")
 
         with imageCols[3]:
-            if st.button("✂️", help="Prune Images"):
+            if st.button("✂️", help="Prune All Images"):
                 client.images.prune()  
                 client.images.prune_builds()
                 st.rerun()
         with imageCols[4]:
-            refresh_all = st.button("🔄", help="Refresh Images")
+            refresh_all = st.button("🔄", help="Refresh All Images")
 
         edited_images_df = st.data_editor(df_images, 
                             hide_index=True,
@@ -98,6 +134,24 @@ def show_image_tab(client):
         
         if refresh_all:
             st.rerun()
+
+        with st.expander("Advanced Image Tools"):
+            imageToolsTab, otherTab = st.tabs(["Pull New Image", "Other"])
+            
+            with imageToolsTab:
+                pullCols = st.columns(2)
+                with pullCols[0]:
+                    pull_image_button = st.button("📥 Pull New Image")
+                with pullCols[1]:
+                    pull_image_clear = st.button("Clear Output")
+                if pull_image_button:
+                    pull(client)
+                if pull_image_clear:
+                    if "pull" in st.session_state:
+                        del st.session_state["pull"]
+
+                if "pull" in st.session_state:
+                    st.code(st.session_state.pull["output"])
 
     else:
         st.info("No images found.")

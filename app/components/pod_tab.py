@@ -41,27 +41,27 @@ def show_pod_tab(client):
         podCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
         with podCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Pod")
+            inspect_all = st.button("🔍", help="Inspect Selected Pods")
 
         with podCols[1]:
-            start_all = st.button("▶️", help="Start Pod")
+            start_all = st.button("▶️", help="Start Selected Pods")
 
         with podCols[2]:
-            pause_all = st.button("⏸️", help="Pause Pod")
+            pause_all = st.button("⏸️", help="Pause Selected Pods")
 
         with podCols[3]:
-            stop_all = st.button("⏹️", help="Stop Pod")
+            stop_all = st.button("⏹️", help="Stop Selected Pods")
 
         with podCols[4]:
-            remove_all = st.button("🗑️", help="Remove Pod")
+            remove_all = st.button("🗑️", help="Remove Selected Pods")
         
         with podCols[5]:
-            if st.button("✂️", help="Prune Pod"):
+            if st.button("✂️", help="Prune All Pods"):
                 client.pods.prune()  
                 st.rerun()
 
         with podCols[6]:
-            refresh_all = st.button("🔄", help="Refresh Pods")
+            refresh_all = st.button("🔄", help="Refresh All Pods")
 
         edited_pods_df = st.data_editor(df_pods, 
                     hide_index=True,

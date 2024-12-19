@@ -35,13 +35,13 @@ def show_network_tab(client):
         networkCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
         with networkCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Network")
+            inspect_all = st.button("🔍", help="Inspect Selected Networks")
 
         with networkCols[1]:
-            remove_all = st.button("🗑️", help="Remove Network")
+            remove_all = st.button("🗑️", help="Remove Selected Networks")
 
         with networkCols[2]:
-            refresh_all = st.button("🔄", help="Refresh Networks")
+            refresh_all = st.button("🔄", help="Refresh All Networks")
 
         edited_networks_df = st.data_editor(df_networks, 
                     hide_index=True,
