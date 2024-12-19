@@ -156,7 +156,7 @@ def show_container_tab(client):
             with executeCols[0]:
                 container_exec = st.button("Execute in Container")
             with executeCols[1]:
-                container_exec_clear = st.button("Clear Output",key="conatiner-clear-outpu")
+                container_exec_clear = st.button("Clear Output",key="conatiner-clear-output")
             if container_exec:
                 execute(df_containers)
 

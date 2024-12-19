@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
-import json
-
 import json
 
 @st.dialog("Pull Image")
@@ -143,7 +140,7 @@ def show_image_tab(client):
                 with pullCols[0]:
                     pull_image_button = st.button("📥 Pull New Image")
                 with pullCols[1]:
-                    pull_image_clear = st.button("Clear Output")
+                    pull_image_clear = st.button("Clear Output", key="pull-clear-output")
                 if pull_image_button:
                     pull(client)
                 if pull_image_clear:
