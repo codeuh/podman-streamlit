@@ -33,16 +33,16 @@ def show_volume_tab(client):
         volumeCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
         with volumeCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Volume")
+            inspect_all = st.button("🔍", help="Inspect Selected Volumes")
 
         with volumeCols[1]:
-            remove_all = st.button("🗑️", help="Remove Volume")
+            remove_all = st.button("🗑️", help="Remove Selected Volumes")
 
         with volumeCols[2]:
-            prune_all = st.button("✂️", help="Prune Volumes")
+            prune_all = st.button("✂️", help="Prune All Volumes")
 
         with volumeCols[3]:
-            refresh_all = st.button("🔄", help="Refresh Volumes")
+            refresh_all = st.button("🔄", help="Refresh All Volumes")
 
         edited_volumes_df = st.data_editor(df_volumes, 
                     hide_index=True,

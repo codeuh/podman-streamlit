@@ -21,15 +21,16 @@ def execute(item):
     command = st.text_input("Execute command:")
     container_id = next((c for c in st.session_state.container_objects.keys() if st.session_state.container_objects[c].name == selected_name), None)
     container = st.session_state.container_objects[container_id]
-    if st.button("Run"):
-        output = container.exec_run(command,stderr=True, stdout=True)  
-        try:
-            decoded_output = output[1].decode('utf-8').strip()
-        except UnicodeDecodeError:
-            decoded_output = output[1].decode('utf-8', errors='replace').strip()
-        cleaned_output = ''.join(char for char in decoded_output if char.isprintable() or char.isspace())
-        st.session_state.execute = {"container": container, "command": command, "output": cleaned_output}
-        st.rerun()
+    if st.button("Execute"):
+        with st.spinner("Executing..."):
+            output = container.exec_run(command,stderr=True, stdout=True)  
+            try:
+                decoded_output = output[1].decode('utf-8').strip()
+            except UnicodeDecodeError:
+                decoded_output = output[1].decode('utf-8', errors='replace').strip()
+            cleaned_output = ''.join(char for char in decoded_output if char.isprintable() or char.isspace())
+            st.session_state.execute = {"container": container, "command": command, "output": cleaned_output}
+            st.rerun()
 
 def show_container_tab(client):
     """
@@ -53,30 +54,30 @@ def show_container_tab(client):
     containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
     with containerCols[0]:
-        inspect_all = st.button("🔍", help="Inspect Container")
+        inspect_all = st.button("🔍", help="Inspect Selected Containers")
 
     with containerCols[1]:
-        log_all = st.button("📜", help="Container Logs")
+        log_all = st.button("📜", help="Show Selected Container Logs")
 
     with containerCols[2]:
-        start_all = st.button("▶️", help="Start Container")
+        start_all = st.button("▶️", help="Start Selected Containers")
 
     with containerCols[3]:
-        pause_all = st.button("⏸️", help="Pause Container")
+        pause_all = st.button("⏸️", help="Pause Selected Containers")
 
     with containerCols[4]:
-        stop_all = st.button("⏹️", help="Stop Container")
+        stop_all = st.button("⏹️", help="Stop Selected Containers")
 
     with containerCols[5]:
-        remove_all = st.button("🗑️", help="Remove Container")
+        remove_all = st.button("🗑️", help="Remove Selected Containers")
 
     with containerCols[6]:
-        if st.button("✂️", help="Prune Containers"):
+        if st.button("✂️", help="Prune All Containers"):
             client.containers.prune()  
             st.rerun()
     
     with containerCols[7]:
-         refresh_all = st.button("🔄", help= "Refresh Container")  
+         refresh_all = st.button("🔄", help= "Refresh All Containers")  
 
     edited_containers_df = st.data_editor(df_containers, 
                     hide_index=True,
@@ -153,9 +154,9 @@ def show_container_tab(client):
         with executeTab:
             executeCols = st.columns(2)
             with executeCols[0]:
-                container_exec = st.button("Execute Command in Container")
+                container_exec = st.button("Execute in Container")
             with executeCols[1]:
-                container_exec_clear = st.button("Clear Command and Output")
+                container_exec_clear = st.button("Clear Output",key="conatiner-clear-outpu")
             if container_exec:
                 execute(df_containers)
 
