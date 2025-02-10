@@ -3,7 +3,7 @@ from utils.status_icons import *
 from dateutil import parser 
 from tzlocal import get_localzone
 
-def get_containers(client):
+def get(client):
     """
     Retrieves a list of Podman containers and their associated metadata.
 
@@ -40,6 +40,10 @@ def get_containers(client):
                 for value in values
             ) if container.ports else "No ports"
 
+            create_command = container.attrs["Config"].get("CreateCommand", [""])
+            if create_command[0].endswith("podman"):
+                create_command[0] = "podman"
+
             status_icon = status_icons.get(container.status.lower(), "❓")
             
             container_data.append({
@@ -50,7 +54,50 @@ def get_containers(client):
                 "Image": container.image.tags,
                 "Ports": formatted_ports,
                 "Created": created_time,
+                "RunCommand": create_command,
             })
             
             st.session_state.container_objects[container.short_id] = container
     return container_data
+
+def run_podlet(client, container_name, run_command):
+    """
+    Runs a container with the Podlet image that generates quadlet files for a passed in run command.
+
+    Args:
+        client (PodmanClient): A client object used to connect to the container runtime.
+        run_command (str): The command to run inside the container.
+
+    Returns:
+        None
+    """
+    try:
+        with st.spinner("Running Podlet..."):
+            # check if podlet container exists and remove it if it does
+            try:
+                podlet_container = client.containers.get(f"podlet-{container_name}")
+                podlet_container.remove(force=True)
+            except Exception:
+                pass
+
+            container = client.containers.run(
+                "ghcr.io/containers/podlet:latest",
+                command=run_command,
+                detach=True,
+                name=f"podlet-{container_name}",
+                network_mode="host",
+            )
+            container.wait(condition=["exited"])
+            logs = container.logs(stream=False, stdout=True, stderr=True)
+            st.subheader(f"{container_name}'s Quadlet")
+            log_placeholder = st.empty()
+            log_lines = []
+            for log_line in logs:
+                decoded_log_line = log_line.decode('utf-8').strip()
+                if decoded_log_line:
+                    log_lines.append(decoded_log_line)
+            log_placeholder.code("\n".join(log_lines),"ini")
+            container.remove()
+            
+    except Exception as e:
+        st.error(str(e))
