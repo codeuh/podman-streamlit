@@ -1,6 +1,6 @@
 status_icons = {
     "running": "🟢",
-    "stopped": "🛑",
+    "stopping": "🛑",
     "exited": "🔴",
     "paused": "⏸️",
     "created": "💡"
