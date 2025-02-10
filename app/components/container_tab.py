@@ -32,7 +32,7 @@ def execute(item):
             st.session_state.execute = {"container": container, "command": command, "output": cleaned_output}
             st.rerun()
 
-def show_container_tab(client):
+def show(client):
     """
     Displays a tab for managing Podman containers.
 

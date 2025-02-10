@@ -4,7 +4,7 @@ connections = {
     "Local User Podman Socket": "unix:///run/user/1000/podman/podman.sock"
 }
 
-def show_sidebar_uri_selector():
+def show_uri_selector():
     """
     Show a selectbox in the sidebar to choose a Podman API connection.
 
@@ -31,7 +31,7 @@ def show_sidebar_uri_selector():
         st.rerun()
     return selected_uri
 
-def show_sidebar_details(client):
+def show_details(client):
     """
     Display Podman information in the sidebar.
 

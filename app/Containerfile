@@ -11,5 +11,11 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY . .
 EXPOSE 8501
-ENV PATH="/venv/bin:$PATH"
+ENV PATH="/venv/bin:$PATH" \    
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_NO_WARN_SCRIPT_LOCATION=on \
+    PIP_DEFAULT_TIMEOUT=100 
 CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--browser.gatherUsageStats=false", "--client.toolbarMode=minimal"]

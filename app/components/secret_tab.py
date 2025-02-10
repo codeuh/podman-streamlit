@@ -1,7 +1,7 @@
 import streamlit as st
 from utils.secret_utils import get_cached_secrets, create_secret, delete_secret, secret_exists 
 
-def show_secret_tab(client):
+def show(client):
     """
     Displays a tab for managing Podman secrets.
 
