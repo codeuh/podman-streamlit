@@ -57,26 +57,29 @@ def show_container_tab(client):
         inspect_all = st.button("🔍", help="Inspect Selected Containers")
 
     with containerCols[1]:
-        log_all = st.button("📜", help="Show Selected Container Logs")
+        show_links = st.button("🌐", help="Show Links")
 
     with containerCols[2]:
-        start_all = st.button("▶️", help="Start Selected Containers")
+        log_all = st.button("📜", help="Show Selected Container Logs")
 
     with containerCols[3]:
-        pause_all = st.button("⏸️", help="Pause Selected Containers")
+        start_all = st.button("▶️", help="Start Selected Containers")
 
     with containerCols[4]:
-        stop_all = st.button("⏹️", help="Stop Selected Containers")
+        pause_all = st.button("⏸️", help="Pause Selected Containers")
 
     with containerCols[5]:
-        remove_all = st.button("🗑️", help="Remove Selected Containers")
+        stop_all = st.button("⏹️", help="Stop Selected Containers")
 
     with containerCols[6]:
+        remove_all = st.button("🗑️", help="Remove Selected Containers")
+
+    with containerCols[7]:
         if st.button("✂️", help="Prune All Containers"):
             client.containers.prune()  
             st.rerun()
     
-    with containerCols[7]:
+    with containerCols[8]:
          refresh_all = st.button("🔄", help= "Refresh All Containers")  
 
     edited_containers_df = st.data_editor(df_containers, 
@@ -97,6 +100,17 @@ def show_container_tab(client):
         for _, row in selected_containers.iterrows():
             container = st.session_state.container_objects[row['ID']]
             st.write(container.attrs)
+
+    if show_links and not selected_containers.empty:
+        for _, row in selected_containers.iterrows():
+            container = st.session_state.container_objects[row['ID']]
+            ports = container.attrs['NetworkSettings']['Ports']
+            if ports:
+                for port, mappings in ports.items():
+                    if mappings:
+                        host_port = mappings[0]['HostPort']
+                        url = f"http://localhost:{host_port}"
+                        st.write(f"Url for container {container.name}: {url}")
 
     if log_all and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
