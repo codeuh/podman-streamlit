@@ -4,7 +4,7 @@ from utils.status_icons import *
 from dateutil import parser 
 from tzlocal import get_localzone
 
-def show_pod_tab(client):
+def show(client):
     """
     Displays a tab in Streamlit that shows information about Podman pods.
 

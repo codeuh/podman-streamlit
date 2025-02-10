@@ -3,7 +3,7 @@ import pandas as pd
 from dateutil import parser 
 from tzlocal import get_localzone
 
-def show_network_tab(client):
+def show(client):
     """
     Displays a tab in Streamlit that shows information about Podman networks.
 

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-def show_usage_details(client):
+def show(client):
     """
     Displays usage details for containers, images, and volumes.
 

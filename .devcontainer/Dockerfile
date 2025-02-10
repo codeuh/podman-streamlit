@@ -11,4 +11,10 @@ COPY /app/requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 ENV _ZO_DOCTOR=0 \
     PATH="/venv/bin:$PATH" \
-    POSH_THEME="/root/.posh-themes/powerlevel10k_lean.omp.json"
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_NO_WARN_SCRIPT_LOCATION=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    POSH_THEME="/root/.posh-themes/powerlevel10k_lean.omp.json" 

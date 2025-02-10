@@ -1,6 +1,6 @@
 import streamlit as st
 
-def show_header():
+def show():
     st.set_page_config(page_title="Podman Streamlit 🦭", page_icon="🦭", layout="wide")
     st.title("🦭 Podman 🦭 Streamlit 🦭")
     st.markdown(

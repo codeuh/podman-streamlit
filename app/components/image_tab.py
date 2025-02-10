@@ -35,7 +35,7 @@ def pull(client):
         except Exception as e:
             st.error(str(e))
 
-def show_image_tab(client):
+def show(client):
     """
     Displays a tab in Streamlit that shows information about Podman images.
 
