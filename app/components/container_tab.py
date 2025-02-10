@@ -81,13 +81,14 @@ def show_container_tab(client):
 
     edited_containers_df = st.data_editor(df_containers, 
                     hide_index=True,
-                    disabled=("Status","Name","ID","Image","Ports"), 
+                    disabled=("Status","Name","ID","Image","Ports","Created"), 
                     column_config={
                         "Selected": st.column_config.CheckboxColumn(
                             "",
                             help="Select containers for actions"
-                        )
+                        ),
                     },
+                    column_order=["Selected", "Name", "Status", "Image", "Ports", "Created"],
                     use_container_width=True)
 
     selected_containers = edited_containers_df[edited_containers_df['Selected']]

@@ -17,8 +17,8 @@ def get_containers(client):
             - "Name": The name of the container.
             - "ID": The short ID of the container.
             - "Image": The tags associated with the container's image.
-            - "Ports": A string describing the ports exposed by the container.
-
+            - "Ports": A string describing the ports exposed by the container.- "Ports": A string describing the ports exposed by the container.
+            - "Created": The creation time of the container, formatted as a string.
     Notes:
         This function also updates the `st.session_state.container_objects` dictionary, which maps container IDs to their corresponding Podman client objects.
     """
@@ -46,6 +46,7 @@ def get_containers(client):
                 "Selected": False,
                 "Status": f"{status_icon} {container.status}",
                 "Name": container.name,
+                "ID": container.short_id,
                 "Image": container.image.tags,
                 "Ports": formatted_ports,
                 "Created": created_time,
