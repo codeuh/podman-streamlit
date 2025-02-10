@@ -167,8 +167,7 @@ def show(client):
 
     if generate_quadlet and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
-            run_command = row['RunCommand']
-            container_utils.run_podlet(client, row["Name"], run_command)
+            container_utils.run_podlet(client, row["Name"], row['RunCommand'])
 
     with st.expander("Avanced Container Tools"):
         executeTab,otherTab = st.tabs(["Execute","Other"])
