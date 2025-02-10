@@ -1,6 +1,7 @@
 import streamlit as st
-
 from utils.status_icons import *
+from dateutil import parser 
+from tzlocal import get_localzone
 
 def get_containers(client):
     """
@@ -27,11 +28,13 @@ def get_containers(client):
     container_data = []
     
     if containers:
+        my_timezone = get_localzone() 
         for container in containers:
             container.reload()
-            
+            created_timestamp = container.attrs["Created"]
+            created_time = parser.isoparse(created_timestamp).astimezone(my_timezone)
             formatted_ports = ", ".join(
-                f"{key} -> HostIp: {value.get('HostIp', 'N/A')}, HostPort: {value.get('HostPort', 'N/A')}"
+                f"{value.get('HostPort', 'N/A')} -> {key}"
                 for key, values in container.ports.items()
                 if values
                 for value in values
@@ -43,9 +46,9 @@ def get_containers(client):
                 "Selected": False,
                 "Status": f"{status_icon} {container.status}",
                 "Name": container.name,
-                "ID": container.short_id,
                 "Image": container.image.tags,
                 "Ports": formatted_ports,
+                "Created": created_time,
             })
             
             st.session_state.container_objects[container.short_id] = container

@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Streamlit",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "${workspaceFolder}/app/app.py",
+        "--browser.gatherUsageStats=false",
+        "--server.headless=true",
+        "--client.toolbarMode=minimal",
+        "--server.runOnSave=true"
+      ],
+      "justMyCode": false
+    }
+  ]
+}
+
