@@ -1,5 +1,9 @@
 import streamlit as st
 import pandas as pd
+import pytz
+from dateutil import parser 
+import time
+from tzlocal import get_localzone
 
 def show_volume_tab(client):
     """
@@ -18,14 +22,16 @@ def show_volume_tab(client):
     volumes = client.volumes.list()
     if volumes:
         volume_data = []
-
+        my_timezone = get_localzone()
         for volume in volumes:
-            created_timestamp = volume.attrs.get("CreatedAt", 0)
-
+            created_timestamp = volume.attrs["CreatedAt"]
+            created_time = parser.isoparse(created_timestamp).astimezone(my_timezone)
             volume_data.append({
                 "Selected": False,
-                "Name": volume.short_id,
-                "Created": created_timestamp,
+                "Name": volume.name,
+                "Scope": volume.attrs["Scope"],
+                "Mount Point": f'{volume.attrs["Mountpoint"]}',
+                "Created": created_time,
             })
 
         df_volumes = pd.DataFrame(volume_data)

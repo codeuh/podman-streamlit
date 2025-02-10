@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from utils.status_icons import *
+from dateutil import parser 
+from tzlocal import get_localzone
 
 def show_pod_tab(client):
     """
@@ -19,10 +21,10 @@ def show_pod_tab(client):
     pods = client.pods.list()
     if pods:
         pod_data = []
-
+        my_timezone = get_localzone()
         for pod in pods:
-            created_timestamp = pod.attrs.get("Created", 0)
-
+            created_timestamp = pod.attrs["Created"]
+            created_time = parser.isoparse(created_timestamp).astimezone(my_timezone)
             containers = pod.attrs['Containers']
             status_icon = "".join(
                 status_icons.get(c['Status'], '❓') for c in containers
@@ -33,7 +35,7 @@ def show_pod_tab(client):
                 "Name": pod.name,
                 "Status": status_icon,
                 "ID": pod.short_id,
-                "Created": created_timestamp,
+                "Created": created_time,
             })
 
         df_pods = pd.DataFrame(pod_data)

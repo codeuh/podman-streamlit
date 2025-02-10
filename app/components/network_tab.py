@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from dateutil import parser 
+from tzlocal import get_localzone
 
 def show_network_tab(client):
     """
@@ -18,16 +20,16 @@ def show_network_tab(client):
     networks = client.networks.list()
     if networks:
         network_data = []
-
+        my_timezone = get_localzone()
         for network in networks:
-            created_timestamp = network.attrs.get("created", 0)
-
+            created_timestamp = network.attrs["created"]
+            created_time = parser.isoparse(created_timestamp).astimezone(my_timezone)
             network_data.append({
                 "Selected": False,
                 "Name": network.name,
                 "ID": network.short_id,
                 "Driver": network.attrs["driver"],
-                "Created": created_timestamp,
+                "Created": created_time,
             })
 
         df_networks = pd.DataFrame(network_data)
