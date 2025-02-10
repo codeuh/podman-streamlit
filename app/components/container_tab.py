@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.container_utils import get_containers
+from utils import container_utils
 
 @st.dialog("Execute Container")
 def execute(item):
@@ -47,7 +47,7 @@ def show(client):
         None
     """
     st.header("📦 Podman Containers")
-    container_data = get_containers(client)
+    container_data = container_utils.get(client)
 
     df_containers = pd.DataFrame(container_data)         
 
@@ -57,29 +57,32 @@ def show(client):
         inspect_all = st.button("🔍", help="Inspect Selected Containers")
 
     with containerCols[1]:
-        show_links = st.button("🌐", help="Show Links")
+        show_links = st.button("🌐", help="Show Selected Links")
 
     with containerCols[2]:
-        log_all = st.button("📜", help="Show Selected Container Logs")
-
+        log_all = st.button("📄", help="Show Selected Logs")
+    
     with containerCols[3]:
-        start_all = st.button("▶️", help="Start Selected Containers")
+        generate_quadlet = st.button("📜", help="Generate Selected Quadlets")
 
     with containerCols[4]:
-        pause_all = st.button("⏸️", help="Pause Selected Containers")
+        start_all = st.button("▶️", help="Start Selected Containers")
 
     with containerCols[5]:
-        stop_all = st.button("⏹️", help="Stop Selected Containers")
+        pause_all = st.button("⏸️", help="Pause Selected Containers")
 
     with containerCols[6]:
-        remove_all = st.button("🗑️", help="Remove Selected Containers")
+        stop_all = st.button("⏹️", help="Stop Selected Containers")
 
     with containerCols[7]:
+        remove_all = st.button("🗑️", help="Remove Selected Containers")
+
+    with containerCols[8]:
         if st.button("✂️", help="Prune All Containers"):
             client.containers.prune()  
             st.rerun()
     
-    with containerCols[8]:
+    with containerCols[9]:
          refresh_all = st.button("🔄", help= "Refresh All Containers")  
 
     edited_containers_df = st.data_editor(df_containers, 
@@ -117,16 +120,16 @@ def show(client):
             container = st.session_state.container_objects[row['ID']]
             logs = container.logs(stream=False,stdout=True, stderr=True,)
 
-            st.subheader(f"Logs for container: {row['Name']}")
+            st.subheader(f"{row["Name"]}'s Logs")
 
             log_placeholder = st.empty()
             log_lines = []
 
             for log_line in logs:
-                decoded_log_line = log_line.decode('utf-8')
-                if decoded_log_line.strip():
+                decoded_log_line = log_line.decode('utf-8').strip()
+                if decoded_log_line:
                     log_lines.append(decoded_log_line)
-            log_placeholder.code("\n".join(log_lines))
+            log_placeholder.code("\n".join(log_lines),"log")
 
     if start_all and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
@@ -162,6 +165,9 @@ def show(client):
     if refresh_all:
         st.rerun()
 
+    if generate_quadlet and not selected_containers.empty:
+        for _, row in selected_containers.iterrows():
+            container_utils.run_podlet(client, row["Name"], row['RunCommand'])
 
     with st.expander("Avanced Container Tools"):
         executeTab,otherTab = st.tabs(["Execute","Other"])

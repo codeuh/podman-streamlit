@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.secret_utils import get_cached_secrets, create_secret, delete_secret, secret_exists 
+from utils import secret_utils
 
 def show(client):
     """
@@ -15,7 +15,7 @@ def show(client):
         None
     """
     st.header("🔐 Podman Secrets")
-    secrets_list = get_cached_secrets(client)
+    secrets_list = secret_utils.get_cached_secrets(client)
 
     createCol, deleteCol = st.columns(2)
 
@@ -30,10 +30,10 @@ def show(client):
             if not secret_name or not secret_data:
                 st.error("Please provide both a secret name and data.")
             else:
-                if secret_exists(client, secret_name):
+                if secret_utils.secret_exists(client, secret_name):
                     st.warning(f"A secret with the name '{secret_name}' already exists.")
                 else:
-                    create_secret(client,secret_name, secret_data)
+                    secret_utils.create_secret(client,secret_name, secret_data)
                     st.rerun()
 
     with deleteCol:
@@ -42,7 +42,7 @@ def show(client):
         if st.button("Delete Secret"):
             secret_id = secret_names.get(secret_to_delete)
             try:
-                delete_secret(client, secret_id)
+                secret_utils.delete_secret(client, secret_id)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error deleting secret: {str(e)}")
