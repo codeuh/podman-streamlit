@@ -60,6 +60,43 @@ def get(client):
             st.session_state.container_objects[container.short_id] = container
     return container_data
 
+@st.dialog("Execute Container")
+def execute(item, selected_names):
+    """
+    Execute a command in selected containers.
+
+    This function creates a dialog for executing a command in multiple Podman containers.
+    It allows the user to select containers, input a command, and run it.
+    The output of the command is then displayed below the container table.
+
+    Args:
+        item: An object containing information about the available containers.
+        selected_names: A list of pre-selected container names.
+
+    Returns:
+        None
+    """
+    selected_names = st.multiselect("Select Containers", options=item.Name, default=selected_names)
+    command = st.text_input("Execute command:")
+    selected_ids = [c for c in st.session_state.container_objects.keys() if st.session_state.container_objects[c].name in selected_names]
+    if st.button("Execute"):
+        st.session_state.execute_outputs = []
+        for container_id in selected_ids:
+            container = st.session_state.container_objects[container_id]
+            with st.spinner(f"Executing in {container.name}..."):
+                output = container.exec_run(command, stderr=True, stdout=True)
+                try:
+                    decoded_output = output[1].decode('utf-8').strip()
+                except UnicodeDecodeError:
+                    decoded_output = output[1].decode('utf-8', errors='replace').strip()
+                cleaned_output = ''.join(char for char in decoded_output if char.isprintable() or char.isspace())
+                st.session_state.execute_outputs.append({
+                    "container": container.name,
+                    "command": command,
+                    "output": cleaned_output
+                })
+        st.rerun()
+
 def run_podlet(client, container_name, run_command):
     """
     Runs a container with the Podlet image that generates quadlet files for a passed in run command.
