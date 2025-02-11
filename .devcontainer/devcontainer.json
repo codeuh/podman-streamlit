@@ -1,7 +1,7 @@
 {
     "name": "podman-streamlit",
     "build": {
-      "dockerfile": "Dockerfile",
+      "dockerfile": "Containerfile",
       "context": ".."
     },
     "customizations": {
