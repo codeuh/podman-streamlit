@@ -34,7 +34,7 @@ jobs:
       
       - name: Extract metadata for container image
         id: meta
-        uses: docker/metadata-action@sha256:eac875d0cbd4b14a709812245236d1ac608597bea448c22e2e2f28720ae56352
+        uses: docker/metadata-action@8e1d5461f02b7886d3c1a774bfbd873650445aa2
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
