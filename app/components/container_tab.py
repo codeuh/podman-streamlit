@@ -86,7 +86,7 @@ def show(client):
                     if mappings:
                         host_port = mappings[0]['HostPort']
                         url = f"http://localhost:{host_port}"
-                        st.write(f"Url for container {container.name}: {url}")
+                        st.write(f"{container.name}: {url}")
 
     if log_all and not selected_containers.empty:
         for _, row in selected_containers.iterrows():
