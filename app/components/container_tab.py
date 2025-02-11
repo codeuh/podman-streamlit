@@ -2,36 +2,6 @@ import streamlit as st
 import pandas as pd
 from utils import container_utils
 
-@st.dialog("Execute Container")
-def execute(item):
-    """
-    Execute a command in a selected container.
-
-    This function creates a dialog for executing a command in a Podman container.
-    It allows the user to select a container, input a command, and run it.
-    The output of the command is then displayed in the Streamlit app.
-
-    Args:
-        item: An object containing information about the available containers.
-
-    Returns:
-        None
-    """
-    selected_name = st.selectbox("Select a Container",options=item.Name)
-    command = st.text_input("Execute command:")
-    container_id = next((c for c in st.session_state.container_objects.keys() if st.session_state.container_objects[c].name == selected_name), None)
-    container = st.session_state.container_objects[container_id]
-    if st.button("Execute"):
-        with st.spinner("Executing..."):
-            output = container.exec_run(command,stderr=True, stdout=True)  
-            try:
-                decoded_output = output[1].decode('utf-8').strip()
-            except UnicodeDecodeError:
-                decoded_output = output[1].decode('utf-8', errors='replace').strip()
-            cleaned_output = ''.join(char for char in decoded_output if char.isprintable() or char.isspace())
-            st.session_state.execute = {"container": container, "command": command, "output": cleaned_output}
-            st.rerun()
-
 def show(client):
     """
     Displays a tab for managing Podman containers.
@@ -51,7 +21,7 @@ def show(client):
 
     df_containers = pd.DataFrame(container_data)         
 
-    containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+    containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
 
     with containerCols[0]:
         inspect_all = st.button("🔍", help="Inspect Selected Containers")
@@ -66,23 +36,26 @@ def show(client):
         generate_quadlet = st.button("📜", help="Generate Selected Quadlets")
 
     with containerCols[4]:
-        start_all = st.button("▶️", help="Start Selected Containers")
+        container_exec = st.button("⚙️", help="Execute in Container")
 
     with containerCols[5]:
-        pause_all = st.button("⏸️", help="Pause Selected Containers")
+        start_all = st.button("▶️", help="Start Selected Containers")
 
     with containerCols[6]:
-        stop_all = st.button("⏹️", help="Stop Selected Containers")
+        pause_all = st.button("⏸️", help="Pause Selected Containers")
 
     with containerCols[7]:
-        remove_all = st.button("🗑️", help="Remove Selected Containers")
+        stop_all = st.button("⏹️", help="Stop Selected Containers")
 
     with containerCols[8]:
+        remove_all = st.button("🗑️", help="Remove Selected Containers")
+
+    with containerCols[9]:
         if st.button("✂️", help="Prune All Containers"):
             client.containers.prune()  
             st.rerun()
     
-    with containerCols[9]:
+    with containerCols[10]:
          refresh_all = st.button("🔄", help= "Refresh All Containers")  
 
     edited_containers_df = st.data_editor(df_containers, 
@@ -169,24 +142,16 @@ def show(client):
         for _, row in selected_containers.iterrows():
             container_utils.run_podlet(client, row["Name"], row['RunCommand'])
 
-    with st.expander("Avanced Container Tools"):
-        executeTab,otherTab = st.tabs(["Execute","Other"])
-        
-        with executeTab:
-            executeCols = st.columns(2)
-            with executeCols[0]:
-                container_exec = st.button("Execute in Container")
-            with executeCols[1]:
-                container_exec_clear = st.button("Clear Output",key="conatiner-clear-output")
-            if container_exec:
-                execute(df_containers)
+    if container_exec:
+        container_utils.execute(df_containers, selected_containers['Name'].tolist())
 
-            if container_exec_clear:
-                if "execute" in st.session_state:
-                    del st.session_state["execute"]
-            
-            if "execute" in st.session_state:
-                st.write(f"command ran in container {st.session_state.execute["container"].name}")
-                st.code(st.session_state.execute["command"])
-                st.write("output:")
-                st.code(st.session_state.execute["output"])
+    if "execute_outputs" in st.session_state:
+        with st.expander("Execution Outputs", True):
+            if st.button("Clear Outputs"):
+                del st.session_state["execute_outputs"]
+                st.rerun()
+            for output in st.session_state.execute_outputs:
+                st.subheader(f"Command ran in container {output['container']}")
+                st.code(output['command'], "bash")
+                st.write("Output:")
+                st.code(output['output'], "text")
