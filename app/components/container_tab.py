@@ -150,8 +150,9 @@ def show(client):
             if st.button("Clear Outputs"):
                 del st.session_state["execute_outputs"]
                 st.rerun()
+            if st.session_state.execute_outputs:
+                st.subheader("Command executed:")
+                st.code(st.session_state.execute_outputs[0]['command'], "bash")
             for output in st.session_state.execute_outputs:
-                st.subheader(f"Command ran in container {output['container']}")
-                st.code(output['command'], "bash")
-                st.write("Output:")
+                st.subheader(f"{output['container']}'s output:")
                 st.code(output['output'], "text")
