@@ -68,7 +68,7 @@ def delete_secret(client, secret_id):
     """
     try:
         client.secrets.remove(secret_id)
-        print(f"Secret {secret_id} deleted successfully.")
+        print("Secret deleted successfully.")
     except Exception as e:
         print(str(e))
 
