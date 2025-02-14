@@ -75,10 +75,10 @@ ghcr.io/codeuh/podman-streamlit:main
         * Delete Secret
         * List Secret Names & IDs
     * Resource Usage Section
-        * Containers Disk Usage
-        * Images Disk Usage
-        * Volumes Disk Usage
-        * Volumes with Reclaimable Space
+        * Containers Disk Usage Chart
+        * Images Disk Usage Chart
+        * Volumes Disk Usage Chart
+        * Volumes with Reclaimable Space Chart
 * Container Stats Page
     * Options
         * Container Selector
@@ -87,3 +87,7 @@ ghcr.io/codeuh/podman-streamlit:main
     * CPU Chart
     * Memory Chart
     * Network Traffic Chart
+
+# Known Issues
+
+1. The Container Stats page is using a while loop which isn't reccomended in streamlit. There's a bug in the code where if you navigate away from the stats page, then back to it, a Bad message format error occurs. You can refresh the page to get it working again.

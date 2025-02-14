@@ -56,7 +56,6 @@ def show_container_selector(client):
     containers = client.containers.list(all=True)
     container_options = [(c.id, f"{c.name} ({c.short_id})") for c in containers]
     
-    # Initialize container tracking in session state if needed
     if 'current_container_id' not in st.session_state:
         st.session_state.current_container_id = container_options[0][0]
     
@@ -66,7 +65,6 @@ def show_container_selector(client):
         format_func=lambda x: next(name for id, name in container_options if id == x)
     )
     
-    # Clear stats data if container selection changed
     if selected_id != st.session_state.current_container_id:
         st.session_state.stats_data = []
         st.session_state.previous_stats = None
@@ -75,7 +73,6 @@ def show_container_selector(client):
     return selected_id
 
 def clear_placeholders():
-    # Clear all existing placeholders
     if 'placeholders' in st.session_state:
         for placeholder in st.session_state.placeholders.values():
             placeholder.empty()
@@ -102,8 +99,7 @@ def show_container_stats(client, container_id):
 
     st.header(f"Container Stats: {container.name}")
 
-    # Configure data retention and layout
-    col1, col2 = st.columns([1, 1])  # Changed from 3 columns to 2
+    col1, col2 = st.columns([1, 1])  
     with col1:
         if 'chart_layout' not in st.session_state:
             st.session_state.chart_layout = "horizontal"
@@ -114,7 +110,6 @@ def show_container_stats(client, container_id):
             horizontal=True,
         )
         
-        # Clear placeholders if layout changed
         if new_layout != st.session_state.chart_layout:
             clear_placeholders()
             st.session_state.chart_layout = new_layout
@@ -131,7 +126,6 @@ def show_container_stats(client, container_id):
             help="How many seconds of historical data to keep in the charts"
         )
 
-    # Initialize session state for stats and placeholders
     if 'stats_data' not in st.session_state:
         st.session_state.stats_data = initialize_stats_data(st.session_state.retention_seconds)
     if 'previous_stats' not in st.session_state:
@@ -139,10 +133,8 @@ def show_container_stats(client, container_id):
     if 'placeholders' not in st.session_state:
         st.session_state.placeholders = {}
 
-    # Create chart placeholders based on layout
     if not st.session_state.placeholders:
         if st.session_state.chart_layout == "horizontal":
-            # Horizontal layout (3 columns)
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.session_state.placeholders['cpu'] = st.empty()
@@ -151,7 +143,6 @@ def show_container_stats(client, container_id):
             with col3:
                 st.session_state.placeholders['network'] = st.empty()
         else:
-            # Vertical layout (stacked)
             st.session_state.placeholders['cpu'] = st.empty()
             st.session_state.placeholders['memory'] = st.empty()
             st.session_state.placeholders['network'] = st.empty()
@@ -161,10 +152,8 @@ def show_container_stats(client, container_id):
         stats_response = container.stats(stream=False, decode=True)
         current_stats = stats_response['Stats'][0]
         
-        # Calculate metrics
         cpu_percent = calculate_cpu_percent(current_stats, st.session_state.previous_stats)
         
-        # Calculate network rates
         if st.session_state.previous_stats:
             time_delta = (current_stats['SystemNano'] - st.session_state.previous_stats['SystemNano']) / 1e9
             rx_bytes = (current_stats['Network']['eth0']['RxBytes'] - 
@@ -174,51 +163,41 @@ def show_container_stats(client, container_id):
         else:
             rx_bytes = tx_bytes = 0
         
-        # Create a record with timestamp and metrics
         current_time = datetime.now()
         record = {
             'timestamp': current_time,
             'cpu_percent': cpu_percent,
-            'memory_mb': current_stats['MemUsage'] / (1024 * 1024),  # Convert bytes to MB
+            'memory_mb': current_stats['MemUsage'] / (1024 * 1024),
             'rx_bytes': rx_bytes,
             'tx_bytes': tx_bytes
         }
         
-        # Handle retention period changes and data updates
         max_points = st.session_state.retention_seconds
         current_points = len(st.session_state.stats_data)
         
         if current_points > max_points:
-            # If retention period decreased, keep only the most recent data
             st.session_state.stats_data = st.session_state.stats_data[-max_points:]
         elif current_points < max_points:
-            # If retention period increased, pad with empty data before existing data
             padding_needed = max_points - current_points
             if current_points > 0:
                 oldest_time = st.session_state.stats_data[0]['timestamp']
                 padding = initialize_stats_data(padding_needed, oldest_time)
                 st.session_state.stats_data = padding + st.session_state.stats_data
             else:
-                # If no data exists, initialize with current time
                 st.session_state.stats_data = initialize_stats_data(max_points - 1, current_time)
         
-        # Append new record
         st.session_state.stats_data.append(record)
         st.session_state.previous_stats = current_stats
         
-        # Keep only the specified number of data points
         max_points = st.session_state.retention_seconds
         if len(st.session_state.stats_data) > max_points:
             st.session_state.stats_data = st.session_state.stats_data[-max_points:]
         elif len(st.session_state.stats_data) < max_points:
-            # If retention period increased, pad with zeros
             padding = initialize_stats_data(max_points - len(st.session_state.stats_data))
             st.session_state.stats_data = padding + st.session_state.stats_data
 
-        # Create DataFrame from the stats data
         stats_df = pd.DataFrame(st.session_state.stats_data)
 
-        # Update all charts using placeholders from session state
         st.session_state.placeholders['cpu'].altair_chart(create_cpu_chart(stats_df), use_container_width=True)
         st.session_state.placeholders['memory'].altair_chart(create_memory_chart(stats_df), use_container_width=True)
         st.session_state.placeholders['network'].altair_chart(create_network_chart(stats_df), use_container_width=True)
