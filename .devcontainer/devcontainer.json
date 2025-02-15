@@ -27,7 +27,6 @@
   ],
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "runArgs": [
-    "--userns=keep-id",
     "--security-opt=label=disable"
   ],
   "containerEnv": {
