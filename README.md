@@ -9,7 +9,7 @@
 
 # Run with Podman
 
-I've only tested it running on a RHEL-9 WSL distro with Podman installed and working correctly. 
+I've tested it running on a RHEL-9 WSL2 distro and a Fedora 41 Workstation VM so far. 
 
 You can determine the path to your socket on a Linux machine with the following command:
 
@@ -91,3 +91,14 @@ ghcr.io/codeuh/podman-streamlit:main
 # Known Issues
 
 1. The Container Stats page is using a while loop which isn't reccomended in streamlit. There's a bug in the code where if you navigate away from the stats page, then back to it, a Bad message format error occurs. You can refresh the page to get it working again.
+2. The Container Stats page is assuming the network name. I need to make that dynaimc and selectable.
+3. I had to disable SELinux by running the below command when I was testing it on Fedora 41 Workstation. Might there be a better way to hanlde this? I'm no SELinux expert.
+````bash
+sudo setenforce 0
+````
+4. You need to make sure the podman socket you are mounting in is enabled and running. Check the commands below for enabling your rootless socket.
+````bash
+systemctl --user status podman.socket
+systemctl --user start podman.socket
+systemctl --user enable podman.socket
+````

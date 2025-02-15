@@ -1,28 +1,35 @@
 {
-    "name": "podman-streamlit",
-    "build": {
-      "dockerfile": "Containerfile",
-      "context": ".."
-    },
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "ms-python.vscode-pylance"
-        ],
-        "settings": {
-          "python.defaultInterpreterPath": "/venv/bin/python"
-        }
+  "name": "podman-streamlit",
+  "build": {
+    "dockerfile": "Containerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.vscode-pylance"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/venv/bin/python"
       }
-    },
-    "initializeCommand": {
-      "init": "curl -s https://raw.githubusercontent.com/codeuh/customize-bash/main/initialize-command.sh | bash -s \"${localWorkspaceFolderBasename}\""
-    },
-    "mounts": [
-      "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,readonly",
-      "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
-      "source=${localWorkspaceFolderBasename}_zoxide,target=/root/.local/share/zoxide,type=volume",
-      "source=${localWorkspaceFolderBasename}_blesh,target=/root/.local/share/blesh,type=volume",
-      "source=/run/user/1000/podman/podman.sock,target=/run/user/1000/podman/podman.sock,type=bind,consistency=cached",
-      "source=/etc/localtime,target=/etc/localtime,type=bind,consistency=cached"
-    ]
+    }
+  },
+  "initializeCommand": {
+    "init": "curl -s https://raw.githubusercontent.com/codeuh/customize-bash/main/initialize-command.sh | bash -s \"${localWorkspaceFolderBasename}\""
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,readonly",
+    "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
+    "source=${localWorkspaceFolderBasename}_zoxide,target=/root/.local/share/zoxide,type=volume",
+    "source=${localWorkspaceFolderBasename}_blesh,target=/root/.local/share/blesh,type=volume",
+    "source=/run/user/1000/podman/podman.sock,target=/run/user/1000/podman/podman.sock,type=bind,consistency=cached",
+    "source=/etc/localtime,target=/etc/localtime,type=bind,consistency=cached"
+  ],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runArgs": [
+    "--security-opt=label=disable"
+  ],
+  "containerEnv": {
+    "HOME": "/root"
   }
+}
