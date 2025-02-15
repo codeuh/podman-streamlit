@@ -15,7 +15,7 @@
     }
   },
   "initializeCommand": {
-    "init": "curl -s https://raw.githubusercontent.com/codeuh/customize-bash/main/initialize-command.sh | bash -s \"${localWorkspaceFolderBasename}\""
+    "init": ".devcontainer/initialize-command.sh \"${localWorkspaceFolderBasename}\""
   },
   "mounts": [
     "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,readonly",
