@@ -96,9 +96,3 @@ ghcr.io/codeuh/podman-streamlit:main
 ````bash
 sudo setenforce 0
 ````
-4. You need to make sure the podman socket you are mounting in is enabled and running. Check the commands below for enabling your rootless socket.
-````bash
-systemctl --user status podman.socket
-systemctl --user start podman.socket
-systemctl --user enable podman.socket
-````
