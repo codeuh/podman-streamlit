@@ -18,7 +18,7 @@
     "init": ".devcontainer/initialize-command.sh \"${localWorkspaceFolderBasename}\""
   },
   "mounts": [
-    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind",
     "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
     "source=${localWorkspaceFolderBasename}_zoxide,target=/root/.local/share/zoxide,type=volume",
     "source=${localWorkspaceFolderBasename}_blesh,target=/root/.local/share/blesh,type=volume",
