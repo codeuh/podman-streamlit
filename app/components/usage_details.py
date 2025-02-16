@@ -44,23 +44,27 @@ def show(client):
 
     st.subheader("Volumes")
     volume_data = pd.DataFrame(resource_data["Volumes"])
-    volume_data["Size_MB"] = volume_data["Size"] / (1024 * 1024)
-    volume_data["ReclaimableSize_MB"] = volume_data["ReclaimableSize"] / (1024 * 1024)
 
-    volume_chart = alt.Chart(volume_data).mark_bar().encode(
-        y=alt.Y("VolumeName:N", sort="-x", title="Volume Name"),
-        x=alt.X("Size_MB:Q", title="Size (MB)"),
-        color=alt.Color("Links:Q", title="Links"),
-        tooltip=["VolumeName", "Size_MB", "ReclaimableSize_MB", "Links"]
-    ).properties(height=300)
-    st.altair_chart(volume_chart, use_container_width=True)
+    if not volume_data.empty:
+        volume_data["Size_MB"] = volume_data["Size"] / (1024 * 1024)
+        volume_data["ReclaimableSize_MB"] = volume_data["ReclaimableSize"] / (1024 * 1024)
 
-    reclaimable_space = volume_data[volume_data["ReclaimableSize_MB"] > 0]
-    st.write("Volumes with reclaimable space:")
-    reclaimable_chart = alt.Chart(reclaimable_space).mark_bar().encode(
-        y=alt.Y("VolumeName:N", sort="-x", title="Volume Name"),
-        x=alt.X("ReclaimableSize_MB:Q", title="Reclaimable Size (MB)"),
-        color=alt.Color("Links:Q", title="Links"),
-        tooltip=["VolumeName", "ReclaimableSize_MB", "Links"]
-    ).properties(height=300)
-    st.altair_chart(reclaimable_chart, use_container_width=True)
+        volume_chart = alt.Chart(volume_data).mark_bar().encode(
+            y=alt.Y("VolumeName:N", sort="-x", title="Volume Name"),
+            x=alt.X("Size_MB:Q", title="Size (MB)"),
+            color=alt.Color("Links:Q", title="Links"),
+            tooltip=["VolumeName", "Size_MB", "ReclaimableSize_MB", "Links"]
+        ).properties(height=300)
+        st.altair_chart(volume_chart, use_container_width=True)
+
+        reclaimable_space = volume_data[volume_data["ReclaimableSize_MB"] > 0]
+        st.write("Volumes with reclaimable space:")
+        reclaimable_chart = alt.Chart(reclaimable_space).mark_bar().encode(
+            y=alt.Y("VolumeName:N", sort="-x", title="Volume Name"),
+            x=alt.X("ReclaimableSize_MB:Q", title="Reclaimable Size (MB)"),
+            color=alt.Color("Links:Q", title="Links"),
+            tooltip=["VolumeName", "ReclaimableSize_MB", "Links"]
+        ).properties(height=300)
+        st.altair_chart(reclaimable_chart, use_container_width=True)
+    else:
+        st.write("No volumes available.")
