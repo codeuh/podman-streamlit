@@ -93,6 +93,9 @@ def initialize_stats_data(seconds, end_time=None):
         for i in range(seconds, 0, -1)
     ]
 
+def get_network_interfaces(stats):
+    return list(stats['Network'].keys())
+
 def show_container_stats(client, container_id):
     container = client.containers.get(container_id)
     container.reload()
@@ -154,12 +157,19 @@ def show_container_stats(client, container_id):
         
         cpu_percent = calculate_cpu_percent(current_stats, st.session_state.previous_stats)
         
+        network_interfaces = get_network_interfaces(current_stats)
+        selected_interface = network_interfaces[0] if network_interfaces else None
+        
+        if not selected_interface:
+            st.warning("No network interface available.")
+            break
+        
         if st.session_state.previous_stats:
             time_delta = (current_stats['SystemNano'] - st.session_state.previous_stats['SystemNano']) / 1e9
-            rx_bytes = (current_stats['Network']['eth0']['RxBytes'] - 
-                       st.session_state.previous_stats['Network']['eth0']['RxBytes']) / (1024 * time_delta)  # Convert to KB/s
-            tx_bytes = (current_stats['Network']['eth0']['TxBytes'] - 
-                       st.session_state.previous_stats['Network']['eth0']['TxBytes']) / (1024 * time_delta)  # Convert to KB/s
+            rx_bytes = (current_stats['Network'][selected_interface]['RxBytes'] - 
+                       st.session_state.previous_stats['Network'][selected_interface]['RxBytes']) / (1024 * time_delta)  # Convert to KB/s
+            tx_bytes = (current_stats['Network'][selected_interface]['TxBytes'] - 
+                       st.session_state.previous_stats['Network'][selected_interface]['TxBytes']) / (1024 * time_delta)  # Convert to KB/s
         else:
             rx_bytes = tx_bytes = 0
         
