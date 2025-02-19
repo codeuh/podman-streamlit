@@ -18,4 +18,4 @@ ENV PATH="/venv/bin:$PATH" \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_NO_WARN_SCRIPT_LOCATION=on \
     PIP_DEFAULT_TIMEOUT=100 
-CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--browser.gatherUsageStats=false", "--client.toolbarMode=minimal"]
+CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.baseUrlPath=podman-streamlit", "--browser.gatherUsageStats=false", "--client.toolbarMode=minimal"]
