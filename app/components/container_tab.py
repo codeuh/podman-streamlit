@@ -24,19 +24,36 @@ def show(client):
 
     df_containers = pd.DataFrame(container_data)         
 
-    containerCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+    action = st.selectbox(
+        "Container Actions",
+        [
+            "Select action...",
+            "🔍 Inspect",
+            "🔗 Show Links", 
+            "📝 View Logs",
+            "📄 Generate Quadlet",
+            "▶️ Execute Command",
+            "▶️ Start",
+            "⏸️ Pause",
+            "⏹️ Stop",
+            "🗑️ Remove",
+            "🧹 Prune",
+            "🔄 Refresh"
+        ]
+    )
 
-    inspect          = container_buttons.show_inspect(containerCols[0])
-    show_links       = container_buttons.show_links(containerCols[1])
-    logs             = container_buttons.show_logs(containerCols[2])
-    generate_quadlet = container_buttons.show_generate_quadlet(containerCols[3])
-    container_exec   = container_buttons.show_exec(containerCols[4])
-    start            = container_buttons.show_start(containerCols[5])
-    pause            = container_buttons.show_pause(containerCols[6])
-    stop             = container_buttons.show_stop(containerCols[7])
-    remove           = container_buttons.show_remove(containerCols[8])
-    prune            = container_buttons.show_prune(containerCols[9])
-    refresh          = container_buttons.show_refresh(containerCols[10])
+    # Convert dropdown selection to button clicks
+    inspect = action == "🔍 Inspect"
+    show_links = action == "🔗 Show Links"
+    logs = action == "📝 View Logs"
+    generate_quadlet = action == "📄 Generate Quadlet"
+    container_exec = action == "▶️ Execute Command"
+    start = action == "▶️ Start"
+    pause = action == "⏸️ Pause"
+    stop = action == "⏹️ Stop"
+    remove = action == "🗑️ Remove"
+    prune = action == "🧹 Prune"
+    refresh = action == "🔄 Refresh"
 
     edited_containers_df = st.data_editor(
         df_containers, 
@@ -49,7 +66,7 @@ def show(client):
             ),
         },
         column_order=["Selected", "Name","ID", "Status", "Image", "Ports", "Created"],
-        use_container_width=True
+        width='stretch'
     )
 
     selected_containers = edited_containers_df[edited_containers_df['Selected']]

@@ -67,7 +67,8 @@ RUN echo 'source /root/.ble.sh/out/ble.sh' >> /root/.bashrc && \
     echo 'export FZF_DEFAULT_OPTS="--layout=reverse --preview '\''bat --color=always {}'\''"' >> /root/.bashrc && \
     echo 'export FZF_CTRL_T_COMMAND="find . -type f -not -path '\''./.git/*'\''"' >> /root/.bashrc && \
     echo 'export FZF_CTRL_T_OPTS="--height 100% --preview '\''bat --color=always {}'\''"' >> /root/.bashrc && \
-    echo 'export FZF_CTRL_R_OPTS="--height 100% --preview '\''echo {}'\'' --preview-window up:3:wrap"' >> /root/.bashrc
+    echo 'export FZF_CTRL_R_OPTS="--height 100% --preview '\''echo {}'\'' --preview-window up:3:wrap"' >> /root/.bashrc && \
+    echo 'clear' >> /root/.bashrc
 
 RUN microdnf install -y python3.12 python3.12-pip \
     && microdnf clean all \
@@ -84,7 +85,7 @@ ENV _ZO_DOCTOR=0 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_NO_WARN_SCRIPT_LOCATION=on \
     PIP_DEFAULT_TIMEOUT=100 \
-    POSH_THEME="/root/.posh-themes/powerlevel10k_lean.omp.json" 
+    POSH_THEME="/root/.posh-themes/aliens.omp.json" 
 
 COPY /app/requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt

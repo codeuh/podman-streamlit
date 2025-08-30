@@ -34,19 +34,22 @@ def show(client):
 
         df_volumes = pd.DataFrame(volume_data)
 
-        volumeCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+        action = st.selectbox(
+            "Volume Actions",
+            [
+                "Select action...",
+                "🔍 Inspect",
+                "🗑️ Remove",
+                "✂️ Prune",
+                "🔄 Refresh"
+            ]
+        )
 
-        with volumeCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Selected Volumes")
-
-        with volumeCols[1]:
-            remove_all = st.button("🗑️", help="Remove Selected Volumes")
-
-        with volumeCols[2]:
-            prune_all = st.button("✂️", help="Prune All Volumes")
-
-        with volumeCols[3]:
-            refresh_all = st.button("🔄", help="Refresh All Volumes")
+        # Convert dropdown selection to button clicks
+        inspect_all = action == "🔍 Inspect"
+        remove_all = action == "🗑️ Remove"
+        prune_all = action == "✂️ Prune"
+        refresh_all = action == "🔄 Refresh"
 
         edited_volumes_df = st.data_editor(df_volumes, 
                     hide_index=True,
@@ -57,7 +60,7 @@ def show(client):
                             help="Select volumes for actions"
                         )
                     },
-                    use_container_width=True)
+                    width="stretch")
 
         selected_volumes = edited_volumes_df[edited_volumes_df['Selected']]
 

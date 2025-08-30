@@ -68,24 +68,29 @@ def show(client):
 
         df_images = pd.DataFrame(image_data)
 
-        imageCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+        action = st.selectbox(
+            "Image Actions",
+            [
+                "Select action...",
+                "🔍 Inspect",
+                "📥 Pull",
+                "🗑️ Remove",
+                "✂️ Prune",
+                "🔄 Refresh"
+            ]
+        )
 
-        with imageCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Selected Images")
+        # Convert dropdown selection to button clicks
+        inspect_all = action == "🔍 Inspect"
+        pull_all = action == "📥 Pull"
+        remove_all = action == "🗑️ Remove"
+        prune_all = action == "✂️ Prune"
+        refresh_all = action == "🔄 Refresh"
 
-        with imageCols[1]:
-            pull_all = st.button("📥", help="Pull Selected Images")
-
-        with imageCols[2]:
-            remove_all = st.button("🗑️", help="Remove Selected Images")
-
-        with imageCols[3]:
-            if st.button("✂️", help="Prune All Images"):
-                client.images.prune()  
-                client.images.prune_builds()
-                st.rerun()
-        with imageCols[4]:
-            refresh_all = st.button("🔄", help="Refresh All Images")
+        if prune_all:
+            client.images.prune()
+            client.images.prune_builds()
+            st.rerun()
 
         edited_images_df = st.data_editor(df_images, 
                             hide_index=True,
@@ -96,7 +101,7 @@ def show(client):
                                     help="Select images for actions"
                                 )
                             },
-                            use_container_width=True)
+                            width="stretch")
 
         selected_images = edited_images_df[edited_images_df['Selected']]
 
