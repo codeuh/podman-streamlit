@@ -5,6 +5,7 @@ from components import (
     sidebar
 )
 import pandas as pd
+import numpy as np
 import altair as alt
 import time
 from datetime import datetime
@@ -21,25 +22,79 @@ def calculate_cpu_percent(current_stats, previous_stats):
     return 0.0
 
 def create_cpu_chart(data):
+    # Ensure we have valid data
+    if len(data) == 0 or data['cpu_percent'].isnull().all():
+        # Create empty chart with domain
+        return alt.Chart(pd.DataFrame({
+            'timestamp': [datetime.now()],
+            'cpu_percent': [0]
+        })).mark_line(
+            point=False
+        ).encode(
+            x=alt.X('timestamp:T', title='Time'),
+            y=alt.Y('cpu_percent:Q', title='CPU (%)', scale=alt.Scale(domain=[0, 100])),
+            tooltip=['timestamp:T', 'cpu_percent:Q']
+        ).properties(height=250, title='CPU Usage')
+
     return alt.Chart(data).mark_line(
         point=False
     ).encode(
         x=alt.X('timestamp:T', title='Time'),
-        y=alt.Y('cpu_percent:Q', title='CPU (%)'),
+        y=alt.Y('cpu_percent:Q', title='CPU (%)', scale=alt.Scale(domain=[0, max(100, data['cpu_percent'].max() * 1.1)])),
         tooltip=['timestamp:T', 'cpu_percent:Q']
     ).properties(height=250, title='CPU Usage')
 
 def create_memory_chart(data):
+    # Ensure we have valid data
+    if len(data) == 0 or data['memory_mb'].isnull().all():
+        # Create empty chart with domain
+        return alt.Chart(pd.DataFrame({
+            'timestamp': [datetime.now()],
+            'memory_mb': [0]
+        })).mark_line(
+            point=False,
+            color='#00FF00'
+        ).encode(
+            x=alt.X('timestamp:T', title='Time'),
+            y=alt.Y('memory_mb:Q', title='Memory (MB)', scale=alt.Scale(domain=[0, 1000])),
+            tooltip=['timestamp:T', 'memory_mb:Q']
+        ).properties(height=250, title='Memory Usage')
+
+    max_memory = data['memory_mb'].max()
     return alt.Chart(data).mark_line(
         point=False,
         color='#00FF00'
     ).encode(
         x=alt.X('timestamp:T', title='Time'),
-        y=alt.Y('memory_mb:Q', title='Memory (MB)'),
+        y=alt.Y('memory_mb:Q', title='Memory (MB)', scale=alt.Scale(domain=[0, max_memory * 1.1])),
         tooltip=['timestamp:T', 'memory_mb:Q']
     ).properties(height=250, title='Memory Usage')
 
 def create_network_chart(data):
+    # Ensure we have valid data
+    if len(data) == 0 or (data['rx_bytes'].isnull().all() and data['tx_bytes'].isnull().all()):
+        # Create empty chart with domain
+        empty_data = pd.DataFrame({
+            'timestamp': [datetime.now()],
+            'rx_bytes': [0],
+            'tx_bytes': [0]
+        })
+        return alt.Chart(empty_data).transform_fold(
+            ['rx_bytes', 'tx_bytes'],
+            as_=['Metric', 'Value']
+        ).mark_line(
+            point=False
+        ).encode(
+            x=alt.X('timestamp:T', title='Time'),
+            y=alt.Y('Value:Q', title='Network (KB/s)', scale=alt.Scale(domain=[0, 1000])),
+            color=alt.Color('Metric:N'),
+            tooltip=['timestamp:T', 'Value:Q', 'Metric:N']
+        ).properties(height=250, title='Network Traffic')
+
+    max_network = max(
+        data['rx_bytes'].max() if not data['rx_bytes'].isnull().all() else 0,
+        data['tx_bytes'].max() if not data['tx_bytes'].isnull().all() else 0
+    )
     return alt.Chart(data).transform_fold(
         ['rx_bytes', 'tx_bytes'],
         as_=['Metric', 'Value']
@@ -47,17 +102,17 @@ def create_network_chart(data):
         point=False
     ).encode(
         x=alt.X('timestamp:T', title='Time'),
-        y=alt.Y('Value:Q', title='Network (KB/s)'),
+        y=alt.Y('Value:Q', title='Network (KB/s)', scale=alt.Scale(domain=[0, max_network * 1.1])),
         color=alt.Color('Metric:N'),
         tooltip=['timestamp:T', 'Value:Q', 'Metric:N']
     ).properties(height=250, title='Network Traffic')
 
 def show_container_selector(client):
     containers = client.containers.list(all=True)
-    container_options = [(c.id, f"{c.name} ({c.short_id})") for c in containers]
+    container_options = [(None, "Select a container...")] + [(c.id, f"{c.name} ({c.short_id})") for c in containers]
     
     if 'current_container_id' not in st.session_state:
-        st.session_state.current_container_id = container_options[0][0]
+        st.session_state.current_container_id = None
     
     selected_id = st.selectbox(
         "Select Container",
@@ -73,10 +128,32 @@ def show_container_selector(client):
     return selected_id
 
 def clear_placeholders():
+    """Clear all placeholder widgets"""
     if 'placeholders' in st.session_state:
         for placeholder in st.session_state.placeholders.values():
-            placeholder.empty()
-    st.session_state.placeholders = {}
+            try:
+                placeholder.empty()
+            except:
+                pass
+        st.session_state.placeholders = {}
+
+def cleanup_session_state():
+    """Clean up session state when leaving the page"""
+    # Clear placeholders first
+    clear_placeholders()
+    
+    # Clean up other session state
+    keys_to_clear = [
+        'stats_data',
+        'previous_stats',
+        'current_container_id',
+        'retention_seconds',
+        'page_active'
+    ]
+    
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
 
 def initialize_stats_data(seconds, end_time=None):
     """Initialize empty stats data for the specified number of seconds"""
@@ -85,10 +162,10 @@ def initialize_stats_data(seconds, end_time=None):
     return [
         {
             'timestamp': end_time - pd.Timedelta(seconds=i),
-            'cpu_percent': None,
-            'memory_mb': None,
-            'rx_bytes': None,
-            'tx_bytes': None
+            'cpu_percent': 0.0,
+            'memory_mb': 0.0,
+            'rx_bytes': 0.0,
+            'tx_bytes': 0.0
         }
         for i in range(seconds, 0, -1)
     ]
@@ -96,38 +173,42 @@ def initialize_stats_data(seconds, end_time=None):
 def get_network_interfaces(stats):
     return list(stats['Network'].keys())
 
+def create_chart_containers():
+    """Create the containers for the charts in vertical layout"""
+    # Clear existing placeholders
+    clear_placeholders()
+    
+    # Create placeholders for vertical layout
+    st.session_state.placeholders['cpu'] = st.empty()
+    st.session_state.placeholders['memory'] = st.empty()
+    st.session_state.placeholders['network'] = st.empty()
+
 def show_container_stats(client, container_id):
-    container = client.containers.get(container_id)
+    # Initialize session state for page activity tracking
+    if 'page_active' not in st.session_state:
+        st.session_state.page_active = True
+    
+    # Reset page activity when the function starts
+    st.session_state.page_active = True
+
+    # Convert container_id to bytes before getting the container
+    container_id_bytes = str(container_id).encode('utf-8')
+    container = client.containers.get(container_id_bytes)
     container.reload()
 
     st.header(f"Container Stats: {container.name}")
 
-    col1, col2 = st.columns([1, 1])  
-    with col1:
-        if 'chart_layout' not in st.session_state:
-            st.session_state.chart_layout = "horizontal"
-        
-        new_layout = st.radio(
-            "Chart Layout",
-            options=["horizontal", "vertical"],
-            horizontal=True,
-        )
-        
-        if new_layout != st.session_state.chart_layout:
-            clear_placeholders()
-            st.session_state.chart_layout = new_layout
+    # Retention period control
+    if 'retention_seconds' not in st.session_state:
+        st.session_state.retention_seconds = 60
     
-    with col2:
-        if 'retention_seconds' not in st.session_state:
-            st.session_state.retention_seconds = 60
-        
-        st.session_state.retention_seconds = st.number_input(
-            "Data retention period (seconds)", 
-            min_value=10, 
-            max_value=3600, 
-            value=st.session_state.retention_seconds,
-            help="How many seconds of historical data to keep in the charts"
-        )
+    st.session_state.retention_seconds = st.number_input(
+        "Data retention period (seconds)", 
+        min_value=10, 
+        max_value=3600, 
+        value=st.session_state.retention_seconds,
+        help="How many seconds of historical data to keep in the charts"
+    )
 
     if 'stats_data' not in st.session_state:
         st.session_state.stats_data = initialize_stats_data(st.session_state.retention_seconds)
@@ -136,22 +217,11 @@ def show_container_stats(client, container_id):
     if 'placeholders' not in st.session_state:
         st.session_state.placeholders = {}
 
+    # Create chart containers if they don't exist
     if not st.session_state.placeholders:
-        if st.session_state.chart_layout == "horizontal":
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.session_state.placeholders['cpu'] = st.empty()
-            with col2:
-                st.session_state.placeholders['memory'] = st.empty()
-            with col3:
-                st.session_state.placeholders['network'] = st.empty()
-        else:
-            st.session_state.placeholders['cpu'] = st.empty()
-            st.session_state.placeholders['memory'] = st.empty()
-            st.session_state.placeholders['network'] = st.empty()
+        create_chart_containers()
 
-    while True:
-        
+    try:
         stats_response = container.stats(stream=False, decode=True)
         current_stats = stats_response['Stats'][0]
         
@@ -162,8 +232,8 @@ def show_container_stats(client, container_id):
         
         if not selected_interface:
             st.warning("No network interface available.")
-            break
-        
+            return
+
         if st.session_state.previous_stats:
             time_delta = (current_stats['SystemNano'] - st.session_state.previous_stats['SystemNano']) / 1e9
             rx_bytes = (current_stats['Network'][selected_interface]['RxBytes'] - 
@@ -198,33 +268,65 @@ def show_container_stats(client, container_id):
         
         st.session_state.stats_data.append(record)
         st.session_state.previous_stats = current_stats
-        
-        max_points = st.session_state.retention_seconds
-        if len(st.session_state.stats_data) > max_points:
-            st.session_state.stats_data = st.session_state.stats_data[-max_points:]
-        elif len(st.session_state.stats_data) < max_points:
-            padding = initialize_stats_data(max_points - len(st.session_state.stats_data))
-            st.session_state.stats_data = padding + st.session_state.stats_data
 
-        stats_df = pd.DataFrame(st.session_state.stats_data)
+        try:
+            # Create DataFrame and ensure timestamp is datetime type
+            stats_df = pd.DataFrame(st.session_state.stats_data)
+            stats_df['timestamp'] = pd.to_datetime(stats_df['timestamp'])
+            
+            # Remove any rows with NaT timestamps or infinite values
+            stats_df = stats_df.replace([np.inf, -np.inf], np.nan)
+            stats_df = stats_df.dropna(subset=['timestamp'])
 
-        st.session_state.placeholders['cpu'].altair_chart(create_cpu_chart(stats_df), use_container_width=True)
-        st.session_state.placeholders['memory'].altair_chart(create_memory_chart(stats_df), use_container_width=True)
-        st.session_state.placeholders['network'].altair_chart(create_network_chart(stats_df), use_container_width=True)
-        
-        time.sleep(1)
+            # Update charts
+            if 'placeholders' in st.session_state:
+                st.session_state.placeholders['cpu'].altair_chart(create_cpu_chart(stats_df), use_container_width=True)
+                st.session_state.placeholders['memory'].altair_chart(create_memory_chart(stats_df), use_container_width=True)
+                st.session_state.placeholders['network'].altair_chart(create_network_chart(stats_df), use_container_width=True)
+        except Exception as e:
+            # If we can't update the charts, the page is probably being unmounted
+            st.error(f"Error updating charts: {str(e)}")
+            return
+
+        # Check if we should continue updating
+        if st.session_state.page_active:
+            time.sleep(1)
+            st.rerun()
+    except Exception as e:
+        st.error(f"Error updating stats: {str(e)}")
+        if st.session_state.page_active:
+            time.sleep(1)
+            st.rerun()
 
 def main():
+    # Check if we're coming from a different page
+    if 'current_page' in st.session_state and st.session_state.current_page != "container_stats":
+        cleanup_session_state()
+    
+    # Set current page
+    st.session_state.current_page = "container_stats"
+    
+    # Configure page
     st.set_page_config(page_title="Container Stats", layout="wide")
-
+    
+    # Initialize page state
+    if 'page_active' not in st.session_state:
+        st.session_state.page_active = True
+    
     header.show()
 
     try:
         selected_uri = sidebar.show_uri_selector()
         with PodmanClient(base_url=selected_uri, identity="~/.ssh/id_ed25519") as client:
             sidebar.show_details(client)
-            container_id = show_container_selector(client)
-            show_container_stats(client, container_id)
+            
+            # Only proceed if the page is still active
+            if st.session_state.page_active:
+                container_id = show_container_selector(client)
+            if container_id is not None:
+                show_container_stats(client, container_id)
+            else:
+                st.info("Please select a container to view its statistics.")
     except Exception as e:
         st.exception(e)
 

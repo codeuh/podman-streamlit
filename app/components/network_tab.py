@@ -34,16 +34,20 @@ def show(client):
 
         df_networks = pd.DataFrame(network_data)
 
-        networkCols = st.columns((1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1))
+        action = st.selectbox(
+            "Network Actions",
+            [
+                "Select action...",
+                "🔍 Inspect",
+                "🗑️ Remove",
+                "🔄 Refresh"
+            ]
+        )
 
-        with networkCols[0]:
-            inspect_all = st.button("🔍", help="Inspect Selected Networks")
-
-        with networkCols[1]:
-            remove_all = st.button("🗑️", help="Remove Selected Networks")
-
-        with networkCols[2]:
-            refresh_all = st.button("🔄", help="Refresh All Networks")
+        # Convert dropdown selection to button clicks
+        inspect_all = action == "🔍 Inspect"
+        remove_all = action == "🗑️ Remove"
+        refresh_all = action == "🔄 Refresh"
 
         edited_networks_df = st.data_editor(df_networks, 
                     hide_index=True,
@@ -54,7 +58,7 @@ def show(client):
                             help="Select networks for actions"
                         )
                     },
-                    use_container_width=True)
+                    width="stretch")
 
         selected_networks = edited_networks_df[edited_networks_df['Selected']]
 

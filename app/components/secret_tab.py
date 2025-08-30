@@ -48,6 +48,6 @@ def show(client):
                 st.error(f"Error deleting secret: {str(e)}")
 
     if secrets_list:
-        st.dataframe(secrets_list, use_container_width=True)
+        st.dataframe(secrets_list, width="stretch")
     else:
         st.info("No secrets found.")
